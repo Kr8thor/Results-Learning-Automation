@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Questionnaire Admin | Results Learning</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --bg-card-hover: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: #334155;
+            --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: var(--bg-card);
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stats-bar {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover,
+        .filter-btn.active {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .responses-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .response-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .response-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .client-name {
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-draft {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--warning);
+        }
+
+        .status-submitted {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--secondary);
+        }
+
+        .card-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+        }
+
+        .progress-bar-small {
+            height: 6px;
+            background: var(--border);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill-small {
+            height: 100%;
+            background: var(--gradient-1);
+            border-radius: 3px;
+        }
+
+        .card-insights {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .insight {
+            background: var(--bg-dark);
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+            font-size: 0.75rem;
+        }
+
+        .insight-label {
+            color: var(--text-muted);
+        }
+
+        .insight-value {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.95);
+            display: none;
+            justify-content: center;
+            align-items: flex-start;
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 900px;
+            margin: 2rem auto;
+        }
+
+        .modal-header {
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .modal-body {
+            padding: 2rem;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .detail-section {
+            margin-bottom: 2rem;
+        }
+
+        .detail-section h3 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .detail-item {
+            background: var(--bg-dark);
+            padding: 1rem;
+            border-radius: 8px;
+        }
+
+        .detail-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+        }
+
+        .detail-value {
+            font-weight: 500;
+        }
+
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .tag {
+            background: var(--bg-dark);
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+        }
+
+        .ranked-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .ranked-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: var(--bg-dark);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+        }
+
+        .rank-number {
+            width: 28px;
+            height: 28px;
+            background: var(--gradient-1);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.875rem;
+        }
+
+        .time-table-detail {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .time-table-detail th,
+        .time-table-detail td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .time-table-detail th {
+            color: var(--text-muted);
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+
+        .frustration-indicator {
+            display: flex;
+            gap: 2px;
+        }
+
+        .frustration-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--border);
+        }
+
+        .frustration-dot.active {
+            background: var(--danger);
+        }
+
+        .frustration-dot.active.low {
+            background: var(--secondary);
+        }
+
+        .frustration-dot.active.medium {
+            background: var(--warning);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem;
+            color: var(--text-muted);
+        }
+
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            padding: 4rem;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .refresh-btn {
+            padding: 0.5rem 1rem;
+            background: var(--primary);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .refresh-btn:hover {
+            background: var(--primary-dark);
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>Questionnaire Responses</h1>
+        <div class="stats-bar">
+            <div class="stat">
+                <div class="stat-value" id="totalResponses">-</div>
+                <div class="stat-label">Total</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="submittedResponses">-</div>
+                <div class="stat-label">Submitted</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="draftResponses">-</div>
+                <div class="stat-label">Drafts</div>
+            </div>
+        </div>
+        <button class="refresh-btn" onclick="loadResponses()">
+            &#8635; Refresh
+        </button>
+    </header>
+
+    <div class="container">
+        <div class="filters">
+            <button class="filter-btn active" data-filter="all" onclick="filterResponses('all', this)">All</button>
+            <button class="filter-btn" data-filter="submitted" onclick="filterResponses('submitted', this)">Submitted</button>
+            <button class="filter-btn" data-filter="draft" onclick="filterResponses('draft', this)">Drafts</button>
+        </div>
+
+        <div id="responsesList" class="responses-grid">
+            <div class="loading">
+                <div class="spinner"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detail Modal -->
+    <div class="modal-overlay" id="detailModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Response Details</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Supabase Configuration
+        const SUPABASE_URL = 'https://qyspmedutegwcdwlbbot.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF5c3BtZWR1dGVnd2Nkd2xiYm90Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM3MzQ1NTgsImV4cCI6MjA3OTMxMDU1OH0.DHayxPYKp6EiWsBvUxWAtsk3lr8REt2ADpIL-L1ggb8';
+
+        let supabaseClient;
+        let allResponses = [];
+        let currentFilter = 'all';
+
+        function initSupabase() {
+            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        }
+
+        async function loadResponses() {
+            try {
+                document.getElementById('responsesList').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+                const { data, error } = await supabaseClient
+                    .from('questionnaire_responses')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                allResponses = data || [];
+                updateStats();
+                renderResponses();
+
+            } catch (error) {
+                console.error('Error loading responses:', error);
+                document.getElementById('responsesList').innerHTML = `
+                    <div class="empty-state">
+                        <p>Error loading responses. Please check your Supabase configuration.</p>
+                    </div>
+                `;
+            }
+        }
+
+        function updateStats() {
+            const total = allResponses.length;
+            const submitted = allResponses.filter(r => r.status === 'submitted').length;
+            const drafts = allResponses.filter(r => r.status === 'draft').length;
+
+            document.getElementById('totalResponses').textContent = total;
+            document.getElementById('submittedResponses').textContent = submitted;
+            document.getElementById('draftResponses').textContent = drafts;
+        }
+
+        function filterResponses(filter, btn) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderResponses();
+        }
+
+        function renderResponses() {
+            const container = document.getElementById('responsesList');
+            let filtered = allResponses;
+
+            if (currentFilter !== 'all') {
+                filtered = allResponses.filter(r => r.status === currentFilter);
+            }
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                        </svg>
+                        <p>No responses found</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filtered.map(response => {
+                const date = new Date(response.created_at).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric'
+                });
+
+                const painPoints = response.top_pain_points || [];
+                const topPainPoint = painPoints.length > 0 ? painPoints[0].process : 'Not specified';
+                const timeSaved = response.estimated_time_saved_hours || '-';
+                const progress = response.progress_percentage || 0;
+
+                return `
+                    <div class="response-card" onclick="showDetail('${response.id}')">
+                        <div class="card-header">
+                            <div class="client-name">${response.client_name || 'Unnamed Client'}</div>
+                            <span class="status-badge status-${response.status}">${response.status}</span>
+                        </div>
+                        <div class="card-meta">
+                            <span>Completed by: ${response.completed_by || 'Unknown'} ${response.completed_by_role ? `(${response.completed_by_role})` : ''}</span>
+                            <span>Created: ${date}</span>
+                        </div>
+                        <div class="progress-bar-small">
+                            <div class="progress-fill-small" style="width: ${progress}%"></div>
+                        </div>
+                        <div class="card-insights">
+                            <div class="insight">
+                                <span class="insight-label">Top Pain: </span>
+                                <span class="insight-value">${topPainPoint.substring(0, 25)}${topPainPoint.length > 25 ? '...' : ''}</span>
+                            </div>
+                            <div class="insight">
+                                <span class="insight-label">Est. Savings: </span>
+                                <span class="insight-value">${timeSaved} hrs/wk</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function showDetail(id) {
+            const response = allResponses.find(r => r.id === id);
+            if (!response) return;
+
+            document.getElementById('modalTitle').textContent = response.client_name || 'Response Details';
+
+            const timeAllocation = response.time_allocation || {};
+            const painPoints = (response.top_pain_points || []).sort((a, b) => a.rank - b.rank);
+            const commonQuestions = response.common_questions || [];
+            const manualReports = response.manual_reports || [];
+            const topAutomations = response.top_three_automations || [];
+
+            document.getElementById('modalBody').innerHTML = `
+                <!-- Client Info -->
+                <div class="detail-section">
+                    <h3>Client Information</h3>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <div class="detail-label">Company</div>
+                            <div class="detail-value">${response.client_name || '-'}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Completed By</div>
+                            <div class="detail-value">${response.completed_by || '-'}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Role</div>
+                            <div class="detail-value">${response.completed_by_role || '-'}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Submitted</div>
+                            <div class="detail-value">${response.submitted_at ? new Date(response.submitted_at).toLocaleString() : 'Not submitted'}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Time Allocation -->
+                ${Object.keys(timeAllocation).length > 0 ? `
+                <div class="detail-section">
+                    <h3>Time Allocation</h3>
+                    <table class="time-table-detail">
+                        <thead>
+                            <tr>
+                                <th>Activity</th>
+                                <th>Hours/Day</th>
+                                <th>Frustration</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${Object.entries(timeAllocation).map(([activity, data]) => `
+                                <tr>
+                                    <td>${activity}</td>
+                                    <td>${data.hours || 0}</td>
+                                    <td>
+                                        <div class="frustration-indicator">
+                                            ${[1,2,3,4,5].map(i => `
+                                                <div class="frustration-dot ${i <= (data.frustration || 0) ? 'active' : ''} ${data.frustration <= 2 ? 'low' : data.frustration <= 3 ? 'medium' : ''}"></div>
+                                            `).join('')}
+                                        </div>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                ` : ''}
+
+                <!-- Repetitive Tasks -->
+                ${(response.repetitive_tasks || []).length > 0 ? `
+                <div class="detail-section">
+                    <h3>Repetitive Tasks</h3>
+                    <div class="tag-list">
+                        ${response.repetitive_tasks.map(task => `<span class="tag">${task}</span>`).join('')}
+                        ${response.repetitive_tasks_other ? `<span class="tag">${response.repetitive_tasks_other}</span>` : ''}
+                    </div>
+                </div>
+                ` : ''}
+
+                <!-- Pain Points -->
+                ${painPoints.length > 0 ? `
+                <div class="detail-section">
+                    <h3>Top Pain Points</h3>
+                    <div class="ranked-list">
+                        ${painPoints.map(pp => `
+                            <div class="ranked-item">
+                                <span class="rank-number">${pp.rank}</span>
+                                <span>${pp.process}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                ` : ''}
+
+                <!-- One Task to Automate -->
+                ${response.one_task_to_automate ? `
+                <div class="detail-section">
+                    <h3>Priority Automation Target</h3>
+                    <div class="detail-item" style="max-width: none;">
+                        <div class="detail-label">Task to Automate</div>
+                        <div class="detail-value">${response.one_task_to_automate}</div>
+                    </div>
+                    <div class="detail-grid" style="margin-top: 1rem;">
+                        <div class="detail-item">
+                            <div class="detail-label">Estimated Time Saved</div>
+                            <div class="detail-value">${response.estimated_time_saved_hours || '-'} hours/week</div>
+                        </div>
+                    </div>
+                </div>
+                ` : ''}
+
+                <!-- Dreaded Tasks -->
+                ${response.dreaded_tasks ? `
+                <div class="detail-section">
+                    <h3>Most Dreaded Tasks</h3>
+                    <div class="detail-item" style="max-width: none;">
+                        <div class="detail-value">${response.dreaded_tasks}</div>
+                    </div>
+                </div>
+                ` : ''}
+
+                <!-- Communication -->
+                <div class="detail-section">
+                    <h3>Communication Bottlenecks</h3>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <div class="detail-label">Emails/Day</div>
+                            <div class="detail-value">${response.emails_per_day || '-'}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Repetitive %</div>
+                            <div class="detail-value">${response.repetitive_email_percentage || '-'}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Chase Frequency</div>
+                            <div class="detail-value">${response.chase_frequency || '-'}</div>
+                        </div>
+                    </div>
+                    ${commonQuestions.length > 0 ? `
+                        <div style="margin-top: 1rem;">
+                            <div class="detail-label" style="margin-bottom: 0.5rem;">Common Questions:</div>
+                            ${commonQuestions.map((q, i) => `
+                                <div class="detail-item" style="margin-bottom: 0.5rem; max-width: none;">
+                                    <div class="detail-value">${i + 1}. ${q}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+
+                <!-- Current Tools -->
+                ${(response.current_tools || []).length > 0 ? `
+                <div class="detail-section">
+                    <h3>Current Tools</h3>
+                    <div class="tag-list">
+                        ${response.current_tools.map(tool => `<span class="tag">${tool}</span>`).join('')}
+                    </div>
+                    ${response.copy_paste_between_systems ? `
+                        <div class="detail-item" style="margin-top: 1rem; max-width: none;">
+                            <div class="detail-label">Copy/Paste Between Systems</div>
+                            <div class="detail-value">${response.copy_paste_systems || 'Yes (unspecified)'}</div>
+                        </div>
+                    ` : ''}
+                </div>
+                ` : ''}
+
+                <!-- Manual Reports -->
+                ${manualReports.length > 0 ? `
+                <div class="detail-section">
+                    <h3>Manual Reports</h3>
+                    <table class="time-table-detail">
+                        <thead>
+                            <tr>
+                                <th>Report</th>
+                                <th>Frequency</th>
+                                <th>Time to Create</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${manualReports.map(r => `
+                                <tr>
+                                    <td>${r.name}</td>
+                                    <td>${r.frequency || '-'}</td>
+                                    <td>${r.time || '-'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                ` : ''}
+
+                <!-- Impact Assessment -->
+                <div class="detail-section">
+                    <h3>Impact Assessment</h3>
+                    ${response.time_reclaimed_usage ? `
+                        <div class="detail-item" style="max-width: none; margin-bottom: 1rem;">
+                            <div class="detail-label">If Given 10 Hours Back</div>
+                            <div class="detail-value">${response.time_reclaimed_usage}</div>
+                        </div>
+                    ` : ''}
+                    ${response.high_value_tasks ? `
+                        <div class="detail-item" style="max-width: none; margin-bottom: 1rem;">
+                            <div class="detail-label">High-Value Tasks (Require Expertise)</div>
+                            <div class="detail-value">${response.high_value_tasks}</div>
+                        </div>
+                    ` : ''}
+                    ${response.low_value_tasks ? `
+                        <div class="detail-item" style="max-width: none; margin-bottom: 1rem;">
+                            <div class="detail-label">Low-Value Tasks (Can Be Automated)</div>
+                            <div class="detail-value">${response.low_value_tasks}</div>
+                        </div>
+                    ` : ''}
+                    ${response.things_falling_through_cracks ? `
+                        <div class="detail-item" style="max-width: none; margin-bottom: 1rem;">
+                            <div class="detail-label">Things Falling Through Cracks</div>
+                            <div class="detail-value">${response.things_falling_through_cracks}</div>
+                        </div>
+                    ` : ''}
+                </div>
+
+                <!-- Top 3 Automations -->
+                ${topAutomations.length > 0 ? `
+                <div class="detail-section">
+                    <h3>Top 3 Automation Priorities</h3>
+                    <div class="ranked-list">
+                        ${topAutomations.map((auto, i) => `
+                            <div class="ranked-item">
+                                <span class="rank-number">${i + 1}</span>
+                                <span>${auto}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                ` : ''}
+
+                <!-- Success Definition -->
+                ${response.success_definition ? `
+                <div class="detail-section">
+                    <h3>Success Definition (6 Months)</h3>
+                    <div class="detail-item" style="max-width: none;">
+                        <div class="detail-value">${response.success_definition}</div>
+                    </div>
+                </div>
+                ` : ''}
+
+                <!-- Additional Notes -->
+                ${response.additional_notes ? `
+                <div class="detail-section">
+                    <h3>Additional Notes</h3>
+                    <div class="detail-item" style="max-width: none;">
+                        <div class="detail-value">${response.additional_notes}</div>
+                    </div>
+                </div>
+                ` : ''}
+            `;
+
+            document.getElementById('detailModal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('detailModal').classList.remove('show');
+        }
+
+        // Close modal on outside click
+        document.getElementById('detailModal').addEventListener('click', (e) => {
+            if (e.target.id === 'detailModal') {
+                closeModal();
+            }
+        });
+
+        // Close modal on escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initSupabase();
+            loadResponses();
+        });
+    </script>
+</body>
+</html>

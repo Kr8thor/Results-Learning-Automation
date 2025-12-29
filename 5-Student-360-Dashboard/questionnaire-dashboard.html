@@ -1,0 +1,2022 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Process Discovery | Results Learning</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --primary-light: #818cf8;
+            --secondary: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --bg-card-hover: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: #334155;
+            --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-3: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-dark) 100%);
+            padding: 2rem;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--gradient-1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .logo h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .logo p {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .progress-bar {
+            width: 200px;
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--gradient-3);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .progress-text {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            min-width: 60px;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Client Info Section */
+        .client-info {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+        }
+
+        .client-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* Section Navigation */
+        .section-nav {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            position: sticky;
+            top: 100px;
+            background: var(--bg-dark);
+            padding: 1rem 0;
+            z-index: 50;
+        }
+
+        .nav-pill {
+            padding: 0.75rem 1.25rem;
+            border-radius: 9999px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.875rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-pill:hover {
+            background: var(--bg-card-hover);
+            color: var(--text-primary);
+        }
+
+        .nav-pill.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .nav-pill.completed {
+            background: var(--secondary);
+            border-color: var(--secondary);
+            color: white;
+        }
+
+        .nav-pill .check {
+            display: none;
+        }
+
+        .nav-pill.completed .check {
+            display: inline;
+        }
+
+        /* Sections */
+        .section {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .section-number {
+            width: 40px;
+            height: 40px;
+            background: var(--gradient-1);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.125rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--text-primary);
+        }
+
+        .form-sublabel {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="number"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        /* Time Allocation Table */
+        .time-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .time-table th {
+            text-align: left;
+            padding: 1rem;
+            background: var(--bg-dark);
+            border-bottom: 1px solid var(--border);
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .time-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+        }
+
+        .time-table tr:hover {
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .hours-input {
+            width: 80px;
+            text-align: center;
+        }
+
+        /* Frustration Rating */
+        .frustration-rating {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .frustration-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--bg-dark);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 600;
+        }
+
+        .frustration-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .frustration-btn.selected {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .frustration-btn[data-level="1"].selected { background: #10b981; border-color: #10b981; }
+        .frustration-btn[data-level="2"].selected { background: #84cc16; border-color: #84cc16; }
+        .frustration-btn[data-level="3"].selected { background: #f59e0b; border-color: #f59e0b; }
+        .frustration-btn[data-level="4"].selected { background: #f97316; border-color: #f97316; }
+        .frustration-btn[data-level="5"].selected { background: #ef4444; border-color: #ef4444; }
+
+        /* Checkbox Grid */
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .checkbox-item:hover {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .checkbox-item.selected {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .checkbox-item input {
+            display: none;
+        }
+
+        .checkbox-custom {
+            width: 22px;
+            height: 22px;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .checkbox-item.selected .checkbox-custom {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .checkbox-custom svg {
+            width: 14px;
+            height: 14px;
+            stroke: white;
+            stroke-width: 3;
+            display: none;
+        }
+
+        .checkbox-item.selected .checkbox-custom svg {
+            display: block;
+        }
+
+        /* Ranking Items - Click to Rank */
+        .ranking-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .ranking-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .ranking-item:hover {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .ranking-item.selected {
+            border-color: var(--secondary);
+            background: rgba(16, 185, 129, 0.15);
+        }
+
+        .ranking-item.selected:hover {
+            background: rgba(16, 185, 129, 0.2);
+        }
+
+        .ranking-badge {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.875rem;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+        }
+
+        .ranking-item.selected .ranking-badge {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .ranking-item-text {
+            flex: 1;
+            font-size: 0.9375rem;
+        }
+
+        /* Rankings Display */
+        .rankings-display {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            min-height: 44px;
+            padding: 0.75rem;
+            background: var(--bg-dark);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .ranking-chip {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            background: var(--secondary);
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: white;
+            animation: chipIn 0.2s ease;
+        }
+
+        @keyframes chipIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .ranking-chip-number {
+            width: 20px;
+            height: 20px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .ranking-chip-remove {
+            width: 18px;
+            height: 18px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            margin-left: 0.25rem;
+            transition: background 0.2s;
+        }
+
+        .ranking-chip-remove:hover {
+            background: rgba(255,255,255,0.4);
+        }
+
+        .no-rankings {
+            color: var(--text-muted);
+            font-style: italic;
+            font-size: 0.875rem;
+        }
+
+        /* Radio Options */
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .radio-item:hover {
+            border-color: var(--primary);
+        }
+
+        .radio-item.selected {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .radio-item input {
+            display: none;
+        }
+
+        .radio-custom {
+            width: 22px;
+            height: 22px;
+            border: 2px solid var(--border);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .radio-item.selected .radio-custom {
+            border-color: var(--primary);
+        }
+
+        .radio-custom::after {
+            content: '';
+            width: 10px;
+            height: 10px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: none;
+        }
+
+        .radio-item.selected .radio-custom::after {
+            display: block;
+        }
+
+        /* Reports Table */
+        .reports-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .reports-table th {
+            text-align: left;
+            padding: 1rem;
+            background: var(--bg-dark);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .reports-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .report-row {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: var(--bg-dark);
+            border-radius: 8px;
+        }
+
+        .report-row input {
+            flex: 2;
+        }
+
+        .report-row select {
+            flex: 1;
+        }
+
+        .add-report-btn {
+            padding: 0.5rem 1rem;
+            background: transparent;
+            border: 1px dashed var(--border);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+        }
+
+        .add-report-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* Process Steps */
+        .steps-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .step-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .step-number {
+            width: 32px;
+            height: 32px;
+            background: var(--gradient-1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.875rem;
+            flex-shrink: 0;
+        }
+
+        .step-item input {
+            flex: 1;
+        }
+
+        /* Navigation Buttons */
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .btn {
+            padding: 0.875rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .btn-secondary {
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-primary {
+            background: var(--gradient-1);
+            border: none;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-success {
+            background: var(--secondary);
+            border: none;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            padding: 1rem 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transform: translateX(200%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.success {
+            border-color: var(--secondary);
+        }
+
+        .toast.error {
+            border-color: var(--danger);
+        }
+
+        .toast-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .toast.success .toast-icon {
+            background: var(--secondary);
+        }
+
+        .toast.error .toast-icon {
+            background: var(--danger);
+        }
+
+        /* Loading Spinner */
+        .loading {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.9);
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .loading.show {
+            display: flex;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .section-nav {
+                top: 80px;
+            }
+
+            .nav-pill {
+                padding: 0.5rem 1rem;
+                font-size: 0.75rem;
+            }
+
+            .time-table {
+                font-size: 0.875rem;
+            }
+
+            .checkbox-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Animations */
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Success Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.95);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            border-radius: 24px;
+            padding: 3rem;
+            text-align: center;
+            max-width: 500px;
+            margin: 1rem;
+            animation: scaleIn 0.3s ease;
+        }
+
+        @keyframes scaleIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--gradient-3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+        }
+
+        .success-icon svg {
+            width: 40px;
+            height: 40px;
+            stroke: white;
+            stroke-width: 3;
+        }
+
+        .modal-content h2 {
+            font-size: 1.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .modal-content p {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">&#128202;</div>
+                <div>
+                    <h1>Results Learning</h1>
+                    <p>Business Process Discovery</p>
+                </div>
+            </div>
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                </div>
+                <span class="progress-text" id="progressText">0% Complete</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Client Info -->
+        <div class="client-info">
+            <div class="client-info-grid">
+                <div class="form-group">
+                    <label class="form-label">Client / Company Name</label>
+                    <input type="text" id="clientName" placeholder="Enter company name">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Completed By</label>
+                    <input type="text" id="completedBy" placeholder="Your name">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Role</label>
+                    <input type="text" id="completedByRole" placeholder="Your role/position">
+                </div>
+            </div>
+        </div>
+
+        <!-- Section Navigation -->
+        <nav class="section-nav" id="sectionNav">
+            <button class="nav-pill active" data-section="1">
+                <span class="check">&#10003;</span>
+                <span>1. Time</span>
+            </button>
+            <button class="nav-pill" data-section="2">
+                <span class="check">&#10003;</span>
+                <span>2. Pain Points</span>
+            </button>
+            <button class="nav-pill" data-section="3">
+                <span class="check">&#10003;</span>
+                <span>3. Communication</span>
+            </button>
+            <button class="nav-pill" data-section="4">
+                <span class="check">&#10003;</span>
+                <span>4. Processes</span>
+            </button>
+            <button class="nav-pill" data-section="5">
+                <span class="check">&#10003;</span>
+                <span>5. Reporting</span>
+            </button>
+            <button class="nav-pill" data-section="6">
+                <span class="check">&#10003;</span>
+                <span>6. Impact</span>
+            </button>
+            <button class="nav-pill" data-section="7">
+                <span class="check">&#10003;</span>
+                <span>7. Priorities</span>
+            </button>
+        </nav>
+
+        <!-- Section 1: Time Allocation -->
+        <section class="section active" id="section1">
+            <div class="section-header">
+                <div class="section-number">1</div>
+                <h2 class="section-title">Time Allocation Overview</h2>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">On a typical day, approximately how many hours do you/your team spend on these activities?</label>
+                <p class="form-sublabel">Enter hours and rate frustration level (1 = Low, 5 = High)</p>
+
+                <table class="time-table">
+                    <thead>
+                        <tr>
+                            <th>Activity</th>
+                            <th style="width: 100px;">Hours/Day</th>
+                            <th style="width: 200px;">Frustration Level</th>
+                        </tr>
+                    </thead>
+                    <tbody id="timeAllocationTable">
+                        <!-- Generated by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Which tasks do you find yourself doing repeatedly that feel like a waste of your time?</label>
+                <p class="form-sublabel">Select all that apply</p>
+
+                <div class="checkbox-grid" id="repetitiveTasks">
+                    <!-- Generated by JS -->
+                </div>
+
+                <div style="margin-top: 1rem;">
+                    <input type="text" id="repetitiveTasksOther" placeholder="Other (please specify)">
+                </div>
+            </div>
+
+            <div class="nav-buttons">
+                <div></div>
+                <button class="btn btn-primary" onclick="nextSection(2)">
+                    Continue &#8594;
+                </button>
+            </div>
+        </section>
+
+        <!-- Section 2: Pain Points -->
+        <section class="section" id="section2">
+            <div class="section-header">
+                <div class="section-number">2</div>
+                <h2 class="section-title">Biggest Pain Points</h2>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Rank your TOP 5 most time-consuming manual processes</label>
+                <p class="form-sublabel">Click items in order of priority (1st click = most time-consuming). Click again to remove.</p>
+
+                <div class="ranking-grid" id="painPointsList">
+                    <!-- Generated by JS -->
+                </div>
+
+                <div class="selected-rankings" id="selectedRankings">
+                    <p class="form-sublabel" style="margin-top: 1.5rem; margin-bottom: 0.75rem;">Your rankings:</p>
+                    <div class="rankings-display" id="rankingsDisplay">
+                        <span class="no-rankings">Click items above to rank them</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">What is the ONE task that, if automated, would give you the most time back?</label>
+                <textarea id="oneTaskToAutomate" placeholder="Describe the task that would save you the most time..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Estimated time saved per week (hours)</label>
+                <input type="number" id="estimatedTimeSaved" placeholder="e.g., 5" style="width: 150px;">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">What tasks do you dread doing the most? Why?</label>
+                <textarea id="dreadedTasks" placeholder="Describe the tasks you dread and explain why..."></textarea>
+            </div>
+
+            <div class="nav-buttons">
+                <button class="btn btn-secondary" onclick="prevSection(1)">
+                    &#8592; Back
+                </button>
+                <button class="btn btn-primary" onclick="nextSection(3)">
+                    Continue &#8594;
+                </button>
+            </div>
+        </section>
+
+        <!-- Section 3: Communication -->
+        <section class="section" id="section3">
+            <div class="section-header">
+                <div class="section-number">3</div>
+                <h2 class="section-title">Communication Bottlenecks</h2>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">How many emails do you receive per day that require action?</label>
+                <div class="radio-group" id="emailsPerDay">
+                    <!-- Generated by JS -->
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">What percentage of your emails are repetitive questions you've answered before?</label>
+                <div class="radio-group" id="repetitiveEmailPercentage">
+                    <!-- Generated by JS -->
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">What are the most common repetitive questions/requests you receive?</label>
+                <p class="form-sublabel">List up to 5 common questions</p>
+                <div class="steps-list" id="commonQuestionsList">
+                    <!-- Generated by JS -->
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">How often do you have to chase people for information or responses?</label>
+                <div class="radio-group" id="chaseFrequency">
+                    <!-- Generated by JS -->
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Who do you most frequently have to chase?</label>
+                <p class="form-sublabel">Select all that apply</p>
+                <div class="checkbox-grid" id="chaseTargets">
+                    <!-- Generated by JS -->
+                </div>
+                <div style="margin-top: 1rem;">
+                    <input type="text" id="chaseTargetsOther" placeholder="Other (please specify)">
+                </div>
+            </div>
+
+            <div class="nav-buttons">
+                <button class="btn btn-secondary" onclick="prevSection(2)">
+                    &#8592; Back
+                </button>
+                <button class="btn btn-primary" onclick="nextSection(4)">
+                    Continue &#8594;
+                </button>
+            </div>
+        </section>
+
+        <!-- Section 4: Manual Processes -->
+        <section class="section" id="section4">
+            <div class="section-header">
+                <div class="section-number">4</div>
+                <h2 class="section-title">Manual Processes & Workarounds</h2>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Describe a typical process you do weekly that involves multiple steps</label>
+
+                <p class="form-sublabel" style="margin-top: 1rem;">Process name:</p>
+                <input type="text" id="typicalProcessName" placeholder="e.g., Weekly report generation">
+
+                <p class="form-sublabel" style="margin-top: 1rem;">Steps involved:</p>
+                <div class="steps-list" id="processStepsList">
+                    <!-- Generated by JS -->
+                </div>
+
+                <p class="form-sublabel" style="margin-top: 1rem;">Time this takes:</p>
+                <input type="text" id="typicalProcessTime" placeholder="e.g., 2 hours" style="width: 200px;">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">What tools/systems do you currently use?</label>
+                <p class="form-sublabel">Select all that apply</p>
+                <div class="checkbox-grid" id="currentTools">
+                    <!-- Generated by JS -->
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Do you frequently copy/paste data between any of these systems?</label>
+                <div class="radio-group">
+                    <label class="radio-item" onclick="toggleRadio(this, 'copyPasteSystems')">
+                        <input type="radio" name="copyPaste" value="yes">
+                        <span class="radio-custom"></span>
+                        <span>Yes</span>
+                    </label>
+                    <label class="radio-item" onclick="toggleRadio(this, 'copyPasteSystems')">
+                        <input type="radio" name="copyPaste" value="no">
+                        <span class="radio-custom"></span>
+                        <span>No</span>
+                    </label>
+                </div>
+                <div id="copyPasteDetails" style="margin-top: 1rem; display: none;">
+                    <input type="text" id="copyPasteSystemsDetails" placeholder="Which systems? (e.g., Email to Spreadsheet, CRM to Accounting)">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">What information do you wish you had at your fingertips but currently have to dig for?</label>
+                <textarea id="informationWishList" placeholder="Describe the information you need quick access to..."></textarea>
+            </div>
+
+            <div class="nav-buttons">
+                <button class="btn btn-secondary" onclick="prevSection(3)">
+                    &#8592; Back
+                </button>
+                <button class="btn btn-primary" onclick="nextSection(5)">
+                    Continue &#8594;
+                </button>
+            </div>
+        </section>
+
+        <!-- Section 5: Reporting -->
+        <section class="section" id="section5">
+            <div class="section-header">
+                <div class="section-number">5</div>
+                <h2 class="section-title">Reporting & Visibility</h2>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">What reports do you currently create manually?</label>
+                <div id="manualReportsList">
+                    <!-- Generated by JS -->
+                </div>
+                <button class="add-report-btn" onclick="addReport()">+ Add Another Report</button>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">What metrics or KPIs do you wish you could see in real-time?</label>
+                <textarea id="realtimeKpis" placeholder="Describe the metrics you'd like to see instantly..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">What problems typically go unnoticed until they become urgent?</label>
+                <textarea id="unnoticedProblems" placeholder="Describe problems that catch you off guard..."></textarea>
+            </div>
+
+            <div class="nav-buttons">
+                <button class="btn btn-secondary" onclick="prevSection(4)">
+                    &#8592; Back
+                </button>
+                <button class="btn btn-primary" onclick="nextSection(6)">
+                    Continue &#8594;
+                </button>
+            </div>
+        </section>
+
+        <!-- Section 6: Impact Assessment -->
+        <section class="section" id="section6">
+            <div class="section-header">
+                <div class="section-number">6</div>
+                <h2 class="section-title">Impact Assessment</h2>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">If you could get 10 hours back per week, what would you use that time for?</label>
+                <textarea id="timeReclaimedUsage" placeholder="Describe how you would use the extra time..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">What tasks require your expertise that only you can do?</label>
+                <p class="form-sublabel">High-value tasks:</p>
+                <textarea id="highValueTasks" placeholder="Tasks that truly need your skills and expertise..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">What tasks just need to get done (but don't require your expertise)?</label>
+                <p class="form-sublabel">Low-value tasks:</p>
+                <textarea id="lowValueTasks" placeholder="Tasks that could be done by anyone or automated..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">What things fall through the cracks that cause problems later?</label>
+                <textarea id="thingsFallingThroughCracks" placeholder="Describe items that get missed and cause issues..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Have you ever tried to solve these problems before? What happened?</label>
+                <textarea id="previousSolutionAttempts" placeholder="Describe previous attempts and outcomes..."></textarea>
+            </div>
+
+            <div class="nav-buttons">
+                <button class="btn btn-secondary" onclick="prevSection(5)">
+                    &#8592; Back
+                </button>
+                <button class="btn btn-primary" onclick="nextSection(7)">
+                    Continue &#8594;
+                </button>
+            </div>
+        </section>
+
+        <!-- Section 7: Quick Wins -->
+        <section class="section" id="section7">
+            <div class="section-header">
+                <div class="section-number">7</div>
+                <h2 class="section-title">Quick Wins & Priorities</h2>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">If we could only automate THREE things, what would have the biggest impact?</label>
+                <div class="steps-list">
+                    <div class="step-item">
+                        <span class="step-number">1</span>
+                        <input type="text" id="topAutomation1" placeholder="Most impactful automation...">
+                    </div>
+                    <div class="step-item">
+                        <span class="step-number">2</span>
+                        <input type="text" id="topAutomation2" placeholder="Second most impactful...">
+                    </div>
+                    <div class="step-item">
+                        <span class="step-number">3</span>
+                        <input type="text" id="topAutomation3" placeholder="Third most impactful...">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">What would success look like for you 6 months from now?</label>
+                <textarea id="successDefinition" placeholder="Describe your ideal future state..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Anything else we should know?</label>
+                <textarea id="additionalNotes" placeholder="Any additional context or information..."></textarea>
+            </div>
+
+            <div class="nav-buttons">
+                <button class="btn btn-secondary" onclick="prevSection(6)">
+                    &#8592; Back
+                </button>
+                <button class="btn btn-success" onclick="submitQuestionnaire()">
+                    &#10003; Submit Questionnaire
+                </button>
+            </div>
+        </section>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <div class="toast-icon">&#10003;</div>
+        <span id="toastMessage">Saved successfully!</span>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Success Modal -->
+    <div class="modal-overlay" id="successModal">
+        <div class="modal-content">
+            <div class="success-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+            </div>
+            <h2>Thank You!</h2>
+            <p>Your questionnaire has been submitted successfully. Our team will review your responses and get back to you shortly.</p>
+            <button class="btn btn-primary" onclick="closeModal()">Close</button>
+        </div>
+    </div>
+
+    <script>
+        // Supabase Configuration
+        const SUPABASE_URL = 'https://qyspmedutegwcdwlbbot.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF5c3BtZWR1dGVnd2Nkd2xiYm90Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM3MzQ1NTgsImV4cCI6MjA3OTMxMDU1OH0.DHayxPYKp6EiWsBvUxWAtsk3lr8REt2ADpIL-L1ggb8';
+
+        let supabaseClient;
+        let responseId = null;
+
+        // Initialize Supabase
+        function initSupabase() {
+            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        }
+
+        // Data structures
+        const timeAllocationActivities = [
+            'Answering emails',
+            'Data entry / updating records',
+            'Scheduling / calendar management',
+            'Chasing people for information',
+            'Creating reports / summaries',
+            'Copying data between systems',
+            'Following up on tasks',
+            'Other'
+        ];
+
+        const repetitiveTaskOptions = [
+            'Answering the same questions over and over',
+            'Manually sending reminders to staff/clients',
+            'Copying information from one system to another',
+            'Creating the same reports weekly/monthly',
+            'Chasing staff for updates or missing information',
+            'Manually checking for errors or inconsistencies',
+            'Scheduling and rescheduling appointments',
+            'Updating spreadsheets with information from emails',
+            'Sending routine status updates'
+        ];
+
+        const painPointOptions = [
+            'Email management and responses',
+            'Staff coordination and follow-ups',
+            'Client/customer communication',
+            'Data entry and record keeping',
+            'Reporting and analytics',
+            'Scheduling and calendar management',
+            'Invoice/billing processes',
+            'Onboarding (clients or staff)',
+            'Document creation and management',
+            'Quality control / checking work'
+        ];
+
+        const emailVolumeOptions = ['1-20', '21-50', '51-100', '100+'];
+        const repetitivePercentageOptions = ['Less than 25%', '25-50%', '51-75%', 'More than 75%'];
+        const chaseFrequencyOptions = ['Multiple times per day', 'Daily', 'A few times per week', 'Rarely'];
+
+        const chaseTargetOptions = [
+            'Staff/Team members',
+            'Clients/Customers',
+            'Vendors/Suppliers',
+            'Management/Leadership',
+            'External partners'
+        ];
+
+        const toolOptions = [
+            { name: 'Email (Gmail / Outlook)', hasDetail: true, detailPlaceholder: 'Which email client?' },
+            { name: 'Spreadsheets (Google Sheets / Excel)', hasDetail: false },
+            { name: 'CRM system', hasDetail: true, detailPlaceholder: 'Which CRM?' },
+            { name: 'Project management', hasDetail: true, detailPlaceholder: 'Which tool? (Asana, Trello, etc.)' },
+            { name: 'Accounting software', hasDetail: true, detailPlaceholder: 'Which software?' },
+            { name: 'Industry-specific software', hasDetail: true, detailPlaceholder: 'Which software?' },
+            { name: 'Communication (Slack / Teams)', hasDetail: true, detailPlaceholder: 'Which platform?' }
+        ];
+
+        // State
+        let formData = {
+            timeAllocation: {},
+            repetitiveTasks: [],
+            painPointRankings: {},
+            emailsPerDay: '',
+            repetitiveEmailPercentage: '',
+            chaseFrequency: '',
+            chaseTargets: [],
+            currentTools: [],
+            copyPasteBetweenSystems: false,
+            manualReports: []
+        };
+
+        let currentSection = 1;
+        const totalSections = 7;
+
+        // Initialize the form
+        function initForm() {
+            try {
+                console.log('Initializing form...');
+                initSupabase();
+                renderTimeAllocationTable();
+                console.log('Time allocation rendered');
+                renderRepetitiveTasks();
+                console.log('Repetitive tasks rendered');
+                renderPainPoints();
+                renderRadioGroups();
+                renderCommonQuestions();
+                renderChaseTargets();
+                renderProcessSteps();
+                renderCurrentTools();
+                initManualReports();
+                updateProgress();
+                console.log('Form initialized successfully');
+
+                // Auto-save on input change (delayed to allow dynamic elements)
+                setTimeout(() => {
+                    document.querySelectorAll('input, textarea, select').forEach(el => {
+                        el.addEventListener('change', autoSave);
+                        el.addEventListener('blur', autoSave);
+                    });
+                }, 100);
+            } catch (error) {
+                console.error('Error initializing form:', error);
+            }
+        }
+
+        // Render Time Allocation Table
+        function renderTimeAllocationTable() {
+            const tbody = document.getElementById('timeAllocationTable');
+            tbody.innerHTML = timeAllocationActivities.map((activity, index) => `
+                <tr>
+                    <td>${activity}${activity === 'Other' ? ' <input type="text" id="otherActivity" placeholder="Specify..." style="width: 150px; margin-left: 10px;">' : ''}</td>
+                    <td>
+                        <input type="number" class="hours-input" id="hours_${index}" min="0" max="24" step="0.5" placeholder="0">
+                    </td>
+                    <td>
+                        <div class="frustration-rating" data-activity="${index}">
+                            ${[1,2,3,4,5].map(level => `
+                                <button type="button" class="frustration-btn" data-level="${level}" onclick="setFrustration(${index}, ${level})">${level}</button>
+                            `).join('')}
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function setFrustration(activityIndex, level) {
+            const rating = document.querySelector(`.frustration-rating[data-activity="${activityIndex}"]`);
+            rating.querySelectorAll('.frustration-btn').forEach(btn => {
+                btn.classList.remove('selected');
+                if (parseInt(btn.dataset.level) === level) {
+                    btn.classList.add('selected');
+                }
+            });
+            formData.timeAllocation[activityIndex] = {
+                ...formData.timeAllocation[activityIndex],
+                frustration: level
+            };
+            autoSave();
+        }
+
+        // Render Repetitive Tasks
+        function renderRepetitiveTasks() {
+            const container = document.getElementById('repetitiveTasks');
+            container.innerHTML = repetitiveTaskOptions.map((task, index) => {
+                const escapedTask = task.replace(/'/g, "\\'");
+                return `
+                <label class="checkbox-item" data-task="${index}">
+                    <input type="checkbox" value="${escapedTask}">
+                    <span class="checkbox-custom">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                    </span>
+                    <span>${task}</span>
+                </label>
+            `}).join('');
+
+            // Add click handlers
+            container.querySelectorAll('.checkbox-item').forEach((item, index) => {
+                item.addEventListener('click', () => {
+                    toggleCheckbox(item, 'repetitiveTasks', repetitiveTaskOptions[index]);
+                });
+            });
+        }
+
+        // Pain Points Ranking State
+        let selectedPainPoints = []; // Array of indices in order of selection
+
+        // Render Pain Points
+        function renderPainPoints() {
+            const container = document.getElementById('painPointsList');
+            container.innerHTML = painPointOptions.map((item, index) => `
+                <div class="ranking-item" data-index="${index}" id="painPoint_${index}">
+                    <span class="ranking-badge">-</span>
+                    <span class="ranking-item-text">${item}</span>
+                </div>
+            `).join('');
+
+            // Add click handlers
+            container.querySelectorAll('.ranking-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    togglePainPointRank(parseInt(item.dataset.index));
+                });
+            });
+
+            updateRankingsDisplay();
+        }
+
+        function togglePainPointRank(index) {
+            const existingPosition = selectedPainPoints.indexOf(index);
+
+            if (existingPosition > -1) {
+                // Remove from selection
+                selectedPainPoints.splice(existingPosition, 1);
+            } else if (selectedPainPoints.length < 5) {
+                // Add to selection (max 5)
+                selectedPainPoints.push(index);
+            } else {
+                // Already have 5, show feedback
+                showToast('Maximum 5 items. Remove one first.', 'error');
+                return;
+            }
+
+            updatePainPointsUI();
+            updateRankingsDisplay();
+
+            // Update formData for saving
+            formData.painPointRankings = {};
+            selectedPainPoints.forEach((idx, rank) => {
+                formData.painPointRankings[idx] = rank + 1;
+            });
+
+            autoSave();
+        }
+
+        function updatePainPointsUI() {
+            painPointOptions.forEach((_, index) => {
+                const item = document.getElementById(`painPoint_${index}`);
+                const badge = item.querySelector('.ranking-badge');
+                const position = selectedPainPoints.indexOf(index);
+
+                if (position > -1) {
+                    item.classList.add('selected');
+                    badge.textContent = position + 1;
+                } else {
+                    item.classList.remove('selected');
+                    badge.textContent = '-';
+                }
+            });
+        }
+
+        function updateRankingsDisplay() {
+            const display = document.getElementById('rankingsDisplay');
+
+            if (selectedPainPoints.length === 0) {
+                display.innerHTML = '<span class="no-rankings">Click items above to rank them</span>';
+                return;
+            }
+
+            display.innerHTML = selectedPainPoints.map((index, rank) => `
+                <div class="ranking-chip">
+                    <span class="ranking-chip-number">${rank + 1}</span>
+                    <span>${painPointOptions[index].length > 30 ? painPointOptions[index].substring(0, 30) + '...' : painPointOptions[index]}</span>
+                    <span class="ranking-chip-remove" onclick="event.stopPropagation(); removePainPointRank(${index})">×</span>
+                </div>
+            `).join('');
+        }
+
+        function removePainPointRank(index) {
+            const position = selectedPainPoints.indexOf(index);
+            if (position > -1) {
+                selectedPainPoints.splice(position, 1);
+                updatePainPointsUI();
+                updateRankingsDisplay();
+
+                // Update formData
+                formData.painPointRankings = {};
+                selectedPainPoints.forEach((idx, rank) => {
+                    formData.painPointRankings[idx] = rank + 1;
+                });
+
+                autoSave();
+            }
+        }
+
+        // Render Radio Groups
+        function renderRadioGroups() {
+            renderRadioGroup('emailsPerDay', emailVolumeOptions, 'emailsPerDay');
+            renderRadioGroup('repetitiveEmailPercentage', repetitivePercentageOptions, 'repetitiveEmailPercentage');
+            renderRadioGroup('chaseFrequency', chaseFrequencyOptions, 'chaseFrequency');
+        }
+
+        function renderRadioGroup(containerId, options, fieldName) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = options.map(option => `
+                <label class="radio-item" onclick="toggleRadio(this, '${fieldName}')">
+                    <input type="radio" name="${fieldName}" value="${option}">
+                    <span class="radio-custom"></span>
+                    <span>${option}</span>
+                </label>
+            `).join('');
+        }
+
+        function toggleRadio(element, fieldName) {
+            const group = element.parentElement;
+            group.querySelectorAll('.radio-item').forEach(item => item.classList.remove('selected'));
+            element.classList.add('selected');
+            formData[fieldName] = element.querySelector('input').value;
+
+            // Show/hide copy paste details
+            if (fieldName === 'copyPasteSystems') {
+                const details = document.getElementById('copyPasteDetails');
+                details.style.display = element.querySelector('input').value === 'yes' ? 'block' : 'none';
+            }
+
+            autoSave();
+        }
+
+        // Render Common Questions
+        function renderCommonQuestions() {
+            const container = document.getElementById('commonQuestionsList');
+            container.innerHTML = [1,2,3,4,5].map(num => `
+                <div class="step-item">
+                    <span class="step-number">${num}</span>
+                    <input type="text" id="commonQuestion_${num}" placeholder="Common question ${num}...">
+                </div>
+            `).join('');
+        }
+
+        // Render Chase Targets
+        function renderChaseTargets() {
+            const container = document.getElementById('chaseTargets');
+            container.innerHTML = chaseTargetOptions.map((target, index) => `
+                <label class="checkbox-item" data-target="${index}">
+                    <input type="checkbox" value="${target}">
+                    <span class="checkbox-custom">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                    </span>
+                    <span>${target}</span>
+                </label>
+            `).join('');
+
+            // Add click handlers
+            container.querySelectorAll('.checkbox-item').forEach((item, index) => {
+                item.addEventListener('click', () => {
+                    toggleCheckbox(item, 'chaseTargets', chaseTargetOptions[index]);
+                });
+            });
+        }
+
+        // Render Process Steps
+        function renderProcessSteps() {
+            const container = document.getElementById('processStepsList');
+            container.innerHTML = [1,2,3,4,5].map(num => `
+                <div class="step-item">
+                    <span class="step-number">${num}</span>
+                    <input type="text" id="processStep_${num}" placeholder="Step ${num}...">
+                </div>
+            `).join('');
+        }
+
+        // Render Current Tools
+        function renderCurrentTools() {
+            const container = document.getElementById('currentTools');
+            container.innerHTML = toolOptions.map((tool, index) => `
+                <label class="checkbox-item" data-tool="${index}">
+                    <input type="checkbox" value="${tool.name}">
+                    <span class="checkbox-custom">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                    </span>
+                    <span>${tool.name}</span>
+                </label>
+            `).join('');
+
+            // Add click handlers
+            container.querySelectorAll('.checkbox-item').forEach((item, index) => {
+                item.addEventListener('click', () => {
+                    toggleCheckbox(item, 'currentTools', toolOptions[index].name);
+                });
+            });
+        }
+
+        // Toggle Checkbox
+        function toggleCheckbox(element, arrayName, value) {
+            element.classList.toggle('selected');
+            const input = element.querySelector('input');
+            input.checked = !input.checked;
+
+            if (input.checked) {
+                if (!formData[arrayName].includes(value)) {
+                    formData[arrayName].push(value);
+                }
+            } else {
+                formData[arrayName] = formData[arrayName].filter(v => v !== value);
+            }
+            autoSave();
+        }
+
+        // Manual Reports
+        let reportCount = 1;
+
+        function initManualReports() {
+            const container = document.getElementById('manualReportsList');
+            container.innerHTML = createReportRow(1);
+        }
+
+        function createReportRow(num) {
+            return `
+                <div class="report-row" id="reportRow_${num}">
+                    <input type="text" id="reportName_${num}" placeholder="Report name">
+                    <select id="reportFrequency_${num}">
+                        <option value="">Frequency</option>
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                    </select>
+                    <input type="text" id="reportTime_${num}" placeholder="Time to create" style="width: 120px;">
+                </div>
+            `;
+        }
+
+        function addReport() {
+            reportCount++;
+            const container = document.getElementById('manualReportsList');
+            container.insertAdjacentHTML('beforeend', createReportRow(reportCount));
+        }
+
+        // Section Navigation
+        function nextSection(section) {
+            markSectionComplete(currentSection);
+            showSection(section);
+        }
+
+        function prevSection(section) {
+            showSection(section);
+        }
+
+        function showSection(section) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(`section${section}`).classList.add('active');
+
+            document.querySelectorAll('.nav-pill').forEach(pill => {
+                pill.classList.remove('active');
+                if (parseInt(pill.dataset.section) === section) {
+                    pill.classList.add('active');
+                }
+            });
+
+            currentSection = section;
+            updateProgress();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function markSectionComplete(section) {
+            const pill = document.querySelector(`.nav-pill[data-section="${section}"]`);
+            pill.classList.add('completed');
+        }
+
+        // Update Progress
+        function updateProgress() {
+            const progress = Math.round((currentSection / totalSections) * 100);
+            document.getElementById('progressFill').style.width = `${progress}%`;
+            document.getElementById('progressText').textContent = `${progress}% Complete`;
+        }
+
+        // Collect Form Data
+        function collectFormData() {
+            // Time allocation
+            const timeAllocation = {};
+            timeAllocationActivities.forEach((activity, index) => {
+                const hours = document.getElementById(`hours_${index}`)?.value;
+                const frustrationBtn = document.querySelector(`.frustration-rating[data-activity="${index}"] .frustration-btn.selected`);
+                if (hours || frustrationBtn) {
+                    timeAllocation[activity] = {
+                        hours: parseFloat(hours) || 0,
+                        frustration: frustrationBtn ? parseInt(frustrationBtn.dataset.level) : 0
+                    };
+                }
+            });
+
+            // Pain points
+            const topPainPoints = [];
+            Object.entries(formData.painPointRankings).forEach(([index, rank]) => {
+                topPainPoints.push({
+                    process: painPointOptions[parseInt(index)],
+                    rank: rank
+                });
+            });
+            topPainPoints.sort((a, b) => a.rank - b.rank);
+
+            // Common questions
+            const commonQuestions = [];
+            for (let i = 1; i <= 5; i++) {
+                const q = document.getElementById(`commonQuestion_${i}`)?.value;
+                if (q) commonQuestions.push(q);
+            }
+
+            // Process steps
+            const processSteps = [];
+            for (let i = 1; i <= 5; i++) {
+                const step = document.getElementById(`processStep_${i}`)?.value;
+                if (step) processSteps.push(step);
+            }
+
+            // Manual reports
+            const manualReports = [];
+            for (let i = 1; i <= reportCount; i++) {
+                const name = document.getElementById(`reportName_${i}`)?.value;
+                const frequency = document.getElementById(`reportFrequency_${i}`)?.value;
+                const time = document.getElementById(`reportTime_${i}`)?.value;
+                if (name) {
+                    manualReports.push({ name, frequency, time });
+                }
+            }
+
+            // Top automations
+            const topAutomations = [];
+            for (let i = 1; i <= 3; i++) {
+                const auto = document.getElementById(`topAutomation${i}`)?.value;
+                if (auto) topAutomations.push(auto);
+            }
+
+            return {
+                client_name: document.getElementById('clientName')?.value || '',
+                completed_by: document.getElementById('completedBy')?.value || '',
+                completed_by_role: document.getElementById('completedByRole')?.value || '',
+                time_allocation: timeAllocation,
+                repetitive_tasks: formData.repetitiveTasks,
+                repetitive_tasks_other: document.getElementById('repetitiveTasksOther')?.value || '',
+                top_pain_points: topPainPoints,
+                one_task_to_automate: document.getElementById('oneTaskToAutomate')?.value || '',
+                estimated_time_saved_hours: parseFloat(document.getElementById('estimatedTimeSaved')?.value) || null,
+                dreaded_tasks: document.getElementById('dreadedTasks')?.value || '',
+                emails_per_day: formData.emailsPerDay || '',
+                repetitive_email_percentage: formData.repetitiveEmailPercentage || '',
+                common_questions: commonQuestions,
+                chase_frequency: formData.chaseFrequency || '',
+                chase_targets: formData.chaseTargets,
+                chase_targets_other: document.getElementById('chaseTargetsOther')?.value || '',
+                typical_process_name: document.getElementById('typicalProcessName')?.value || '',
+                typical_process_steps: processSteps,
+                typical_process_time: document.getElementById('typicalProcessTime')?.value || '',
+                current_tools: formData.currentTools,
+                copy_paste_between_systems: document.querySelector('input[name="copyPaste"]:checked')?.value === 'yes',
+                copy_paste_systems: document.getElementById('copyPasteSystemsDetails')?.value || '',
+                information_wish_list: document.getElementById('informationWishList')?.value || '',
+                manual_reports: manualReports,
+                realtime_kpis: document.getElementById('realtimeKpis')?.value || '',
+                unnoticed_problems: document.getElementById('unnoticedProblems')?.value || '',
+                time_reclaimed_usage: document.getElementById('timeReclaimedUsage')?.value || '',
+                high_value_tasks: document.getElementById('highValueTasks')?.value || '',
+                low_value_tasks: document.getElementById('lowValueTasks')?.value || '',
+                things_falling_through_cracks: document.getElementById('thingsFallingThroughCracks')?.value || '',
+                previous_solution_attempts: document.getElementById('previousSolutionAttempts')?.value || '',
+                top_three_automations: topAutomations,
+                success_definition: document.getElementById('successDefinition')?.value || '',
+                additional_notes: document.getElementById('additionalNotes')?.value || '',
+                progress_percentage: Math.round((currentSection / totalSections) * 100)
+            };
+        }
+
+        // Auto Save
+        let saveTimeout;
+        async function autoSave() {
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(async () => {
+                try {
+                    const data = collectFormData();
+                    data.status = 'draft';
+                    data.updated_at = new Date().toISOString();
+
+                    if (responseId) {
+                        // Update existing
+                        const { error } = await supabaseClient
+                            .from('questionnaire_responses')
+                            .update(data)
+                            .eq('id', responseId)
+                            .select();
+
+                        if (error) throw error;
+                    } else {
+                        // Create new
+                        const { data: newData, error } = await supabaseClient
+                            .from('questionnaire_responses')
+                            .insert([data])
+                            .select();
+
+                        if (error) throw error;
+                        if (newData && newData[0]) {
+                            responseId = newData[0].id;
+                        }
+                    }
+
+                    showToast('Progress saved', 'success');
+                } catch (error) {
+                    console.error('Auto-save error:', error);
+                    // Don't show error toast for auto-save to avoid annoying users
+                }
+            }, 2000);
+        }
+
+        // Submit Questionnaire
+        async function submitQuestionnaire() {
+            showLoading(true);
+
+            try {
+                const data = collectFormData();
+                data.status = 'submitted';
+                data.submitted_at = new Date().toISOString();
+                data.progress_percentage = 100;
+
+                if (responseId) {
+                    const { error } = await supabaseClient
+                        .from('questionnaire_responses')
+                        .update(data)
+                        .eq('id', responseId);
+
+                    if (error) throw error;
+                } else {
+                    const { data: newData, error } = await supabaseClient
+                        .from('questionnaire_responses')
+                        .insert([data])
+                        .select();
+
+                    if (error) throw error;
+                }
+
+                showLoading(false);
+                showSuccessModal();
+
+            } catch (error) {
+                showLoading(false);
+                console.error('Submit error:', error);
+                showToast('Error submitting questionnaire. Please try again.', 'error');
+            }
+        }
+
+        // UI Helpers
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+            toast.className = `toast ${type} show`;
+            toastMessage.textContent = message;
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').classList.toggle('show', show);
+        }
+
+        function showSuccessModal() {
+            document.getElementById('successModal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('successModal').classList.remove('show');
+        }
+
+        // Nav pill click handler
+        document.getElementById('sectionNav').addEventListener('click', (e) => {
+            const pill = e.target.closest('.nav-pill');
+            if (pill) {
+                showSection(parseInt(pill.dataset.section));
+            }
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', initForm);
+    </script>
+</body>
+</html>
