@@ -1,0 +1,414 @@
+{
+  "name": "Smart Email Categorization & Auto-Response System",
+  "description": "AI-powered email triage that automatically categorizes incoming emails, prioritizes urgent items, sends automated responses to common inquiries, and creates tasks from actionable emails",
+  "trigger": "New email received in inbox",
+  "platform": "n8n",
+
+  "workflow_steps": [
+    {
+      "step": 1,
+      "node_type": "Gmail Trigger",
+      "name": "Monitor Inbox for New Emails",
+      "config": {
+        "event": "Email Received",
+        "label": "INBOX",
+        "poll_interval": "1 minute",
+        "simple_mode": false
+      },
+      "description": "Triggers whenever a new email arrives in the inbox"
+    },
+    {
+      "step": 2,
+      "node_type": "Function",
+      "name": "Extract Email Data",
+      "code": "const email = $input.first().json;\n\nconst extracted = {\n  email_id: email.id,\n  thread_id: email.threadId,\n  from: email.from,\n  from_email: email.from.match(/<(.+)>/)?.[1] || email.from,\n  to: email.to,\n  subject: email.subject,\n  body: email.textPlain || email.textHtml,\n  received_date: new Date(email.date).toISOString(),\n  has_attachments: email.attachments?.length > 0,\n  attachment_count: email.attachments?.length || 0,\n  is_reply: email.inReplyTo ? true : false,\n  labels: email.labelIds || []\n};\n\nreturn { json: extracted };",
+      "description": "Parses email metadata and content for processing"
+    },
+    {
+      "step": 3,
+      "node_type": "Airtable",
+      "name": "Check VIP Sender List",
+      "config": {
+        "operation": "Search",
+        "base_id": "YOUR_AIRTABLE_BASE_ID",
+        "table": "VIP Contacts",
+        "filter_formula": "SEARCH(LOWER('{from_email}'), LOWER({email}))",
+        "return_fields": "name, email, priority_level, notification_method"
+      },
+      "description": "Checks if sender is on VIP list for priority handling"
+    },
+    {
+      "step": 4,
+      "node_type": "OpenAI",
+      "name": "AI Email Analysis",
+      "config": {
+        "model": "gpt-4",
+        "operation": "Message",
+        "messages": [
+          {
+            "role": "system",
+            "content": "You are an email categorization assistant. Analyze the email and return ONLY a JSON object with these fields:\n{\n  \"category\": \"urgent\" | \"parent_communication\" | \"staff_communication\" | \"administrative\" | \"newsletter\" | \"low_priority\",\n  \"priority_score\": 1-10,\n  \"sentiment\": \"positive\" | \"neutral\" | \"negative\" | \"urgent\",\n  \"requires_response\": true | false,\n  \"is_question\": true | false,\n  \"main_topic\": \"brief description\",\n  \"suggested_action\": \"respond\" | \"file\" | \"delegate\" | \"auto_respond\" | \"ignore\",\n  \"urgency_keywords\": [\"array of urgent keywords found\"],\n  \"is_bulk\": true | false,\n  \"can_auto_respond\": true | false,\n  \"response_type\": \"faq\" | \"acknowledgment\" | \"schedule\" | \"none\"\n}\n\nBe concise and accurate."
+          },
+          {
+            "role": "user",
+            "content": "From: {{$json.from}}\nSubject: {{$json.subject}}\nBody: {{$json.body}}"
+          }
+        ],
+        "response_format": { "type": "json_object" }
+      },
+      "description": "Uses AI to analyze email content and determine category, priority, and action"
+    },
+    {
+      "step": 5,
+      "node_type": "Function",
+      "name": "Combine & Calculate Final Priority",
+      "code": "const email = $('Extract Email Data').item.json;\nconst vip = $('Check VIP Sender List').item?.json;\nconst ai = JSON.parse($input.first().json.choices[0].message.content);\n\n// Determine final category and priority\nlet finalCategory = ai.category;\nlet priorityScore = ai.priority_score;\n\n// VIP boost\nif (vip && vip.priority_level === 'VIP') {\n  priorityScore = Math.min(10, priorityScore + 3);\n  finalCategory = 'urgent';\n}\n\n// Urgent keyword detection\nconst urgentKeywords = ['urgent', 'asap', 'emergency', 'immediately', 'critical', 'help', 'problem'];\nconst hasUrgentKeyword = urgentKeywords.some(keyword => \n  email.subject.toLowerCase().includes(keyword) || \n  email.body.toLowerCase().includes(keyword)\n);\n\nif (hasUrgentKeyword) {\n  priorityScore = Math.min(10, priorityScore + 2);\n}\n\nconst result = {\n  ...email,\n  ...ai,\n  is_vip: !!vip,\n  vip_info: vip,\n  final_category: finalCategory,\n  final_priority_score: priorityScore,\n  priority_label: priorityScore >= 8 ? 'HIGH' : priorityScore >= 5 ? 'MEDIUM' : 'LOW',\n  processed_at: new Date().toISOString()\n};\n\nreturn { json: result };",
+      "description": "Combines AI analysis with VIP status and urgency detection for final categorization"
+    },
+    {
+      "step": 6,
+      "node_type": "Switch",
+      "name": "Route by Action Type",
+      "config": {
+        "mode": "expression",
+        "rules": [
+          { "output": 0, "expression": "={{$json.priority_label === 'HIGH'}}" },
+          { "output": 1, "expression": "={{$json.can_auto_respond === true}}" },
+          { "output": 2, "expression": "={{$json.is_bulk === true}}" },
+          { "output": 3, "expression": "={{$json.suggested_action === 'delegate'}}" },
+          { "output": 4, "expression": "=true" }
+        ]
+      },
+      "description": "Routes email to appropriate handling path"
+    },
+    {
+      "step": "7a",
+      "path": "high_priority",
+      "node_type": "Gmail",
+      "name": "Apply HIGH PRIORITY Label",
+      "config": {
+        "operation": "Add Label",
+        "email_id": "={{$json.email_id}}",
+        "labels": ["URGENT", "ACTION_REQUIRED"]
+      }
+    },
+    {
+      "step": "7b",
+      "path": "high_priority",
+      "node_type": "Slack",
+      "name": "Send Slack Alert",
+      "config": {
+        "channel": "#urgent-emails",
+        "text": "🚨 *HIGH PRIORITY EMAIL*\n\n*From:* {{$json.from}}\n*Subject:* {{$json.subject}}\n*Category:* {{$json.final_category}}\n*Topic:* {{$json.main_topic}}\n{{#if $json.is_vip}}*VIP SENDER* ⭐{{/if}}\n\n*Suggested Action:* {{$json.suggested_action}}\n\n<https://mail.google.com/mail/u/0/#inbox/{{$json.email_id}}|View Email>"
+      }
+    },
+    {
+      "step": "7c",
+      "path": "high_priority",
+      "node_type": "Twilio",
+      "name": "Send SMS for Critical VIP",
+      "config": {
+        "operation": "Send SMS",
+        "to": "{{$json.vip_info.notification_phone}}",
+        "message": "URGENT: Email from {{$json.from}} - {{$json.subject}}"
+      },
+      "conditions": {
+        "if": "={{$json.is_vip && $json.final_priority_score >= 9}}"
+      }
+    },
+    {
+      "step": "8a",
+      "path": "auto_respond",
+      "node_type": "Airtable",
+      "name": "Find Matching FAQ Template",
+      "config": {
+        "operation": "Search",
+        "base_id": "YOUR_AIRTABLE_BASE_ID",
+        "table": "Email Templates",
+        "filter_formula": "AND({type} = '{{$json.response_type}}', {active} = TRUE())",
+        "max_records": 1
+      }
+    },
+    {
+      "step": "8b",
+      "path": "auto_respond",
+      "node_type": "OpenAI",
+      "name": "Generate Personalized Response",
+      "config": {
+        "model": "gpt-4",
+        "messages": [
+          {
+            "role": "system",
+            "content": "You are a helpful email assistant for Results Learning. Generate a professional, friendly response based on the template provided. Personalize it to address the specific question in the email.\n\nTemplate:\n{{$('Find Matching FAQ Template').item.json.template_body}}\n\nOriginal Email:\nFrom: {{$json.from}}\nSubject: {{$json.subject}}\nBody: {{$json.body}}\n\nGenerate a response that:\n1. Addresses them by name if available\n2. Directly answers their question\n3. Is warm and professional\n4. Includes relevant information from the template\n5. Signs off appropriately"
+          }
+        ]
+      },
+      "conditions": {
+        "if": "={{$('Find Matching FAQ Template').item !== null}}"
+      }
+    },
+    {
+      "step": "8c",
+      "path": "auto_respond",
+      "node_type": "Gmail",
+      "name": "Send Auto-Response",
+      "config": {
+        "operation": "Reply",
+        "thread_id": "={{$json.thread_id}}",
+        "to": "={{$json.from_email}}",
+        "subject": "Re: {{$json.subject}}",
+        "body": "{{$('Generate Personalized Response').item.json.choices[0].message.content}}\n\n---\nThis email was generated automatically. If you need further assistance, please let us know."
+      }
+    },
+    {
+      "step": "8d",
+      "path": "auto_respond",
+      "node_type": "Gmail",
+      "name": "Apply AUTO-RESPONDED Label",
+      "config": {
+        "operation": "Add Label",
+        "email_id": "={{$json.email_id}}",
+        "labels": ["AUTO_RESPONDED"],
+        "archive": true
+      }
+    },
+    {
+      "step": "9a",
+      "path": "bulk",
+      "node_type": "Gmail",
+      "name": "Apply NEWSLETTER Label & Archive",
+      "config": {
+        "operation": "Add Label",
+        "email_id": "={{$json.email_id}}",
+        "labels": ["NEWSLETTERS"],
+        "archive": true,
+        "mark_read": true
+      }
+    },
+    {
+      "step": "9b",
+      "path": "bulk",
+      "node_type": "Airtable",
+      "name": "Add to Weekly Digest Queue",
+      "config": {
+        "operation": "Create",
+        "base_id": "YOUR_AIRTABLE_BASE_ID",
+        "table": "Newsletter Digest",
+        "fields": {
+          "sender": "={{$json.from}}",
+          "subject": "={{$json.subject}}",
+          "received_date": "={{$json.received_date}}",
+          "digest_week": "={{$now.format('YYYY-[W]WW')}}",
+          "included_in_digest": false
+        }
+      }
+    },
+    {
+      "step": "10a",
+      "path": "delegate",
+      "node_type": "OpenAI",
+      "name": "Extract Action Items",
+      "config": {
+        "model": "gpt-4",
+        "messages": [
+          {
+            "role": "system",
+            "content": "Extract actionable tasks from this email. Return JSON:\n{\n  \"task_title\": \"Brief task description\",\n  \"task_description\": \"Detailed description\",\n  \"due_date\": \"YYYY-MM-DD or null\",\n  \"priority\": \"high\" | \"medium\" | \"low\",\n  \"suggested_assignee\": \"role or person\"\n}"
+          },
+          {
+            "role": "user",
+            "content": "{{$json.body}}"
+          }
+        ],
+        "response_format": { "type": "json_object" }
+      }
+    },
+    {
+      "step": "10b",
+      "path": "delegate",
+      "node_type": "Airtable",
+      "name": "Create Task Record",
+      "config": {
+        "operation": "Create",
+        "base_id": "YOUR_AIRTABLE_BASE_ID",
+        "table": "Tasks",
+        "fields": {
+          "title": "={{JSON.parse($input.first().json.choices[0].message.content).task_title}}",
+          "description": "={{JSON.parse($input.first().json.choices[0].message.content).task_description}}",
+          "source": "email",
+          "source_email_id": "={{$json.email_id}}",
+          "priority": "={{JSON.parse($input.first().json.choices[0].message.content).priority}}",
+          "status": "pending",
+          "created_from": "email_automation"
+        }
+      }
+    },
+    {
+      "step": "10c",
+      "path": "delegate",
+      "node_type": "Gmail",
+      "name": "Apply TASK_CREATED Label",
+      "config": {
+        "operation": "Add Label",
+        "email_id": "={{$json.email_id}}",
+        "labels": ["TASK_CREATED"]
+      }
+    },
+    {
+      "step": "11a",
+      "path": "standard",
+      "node_type": "Gmail",
+      "name": "Apply Category Labels",
+      "config": {
+        "operation": "Add Label",
+        "email_id": "={{$json.email_id}}",
+        "labels": ["={{$json.final_category.toUpperCase()}}"]
+      }
+    },
+    {
+      "step": 12,
+      "node_type": "Merge",
+      "name": "Merge All Paths"
+    },
+    {
+      "step": 13,
+      "node_type": "Airtable",
+      "name": "Log Email Processing",
+      "config": {
+        "operation": "Create",
+        "base_id": "YOUR_AIRTABLE_BASE_ID",
+        "table": "Email Processing Log",
+        "fields": {
+          "email_id": "={{$json.email_id}}",
+          "from": "={{$json.from}}",
+          "subject": "={{$json.subject}}",
+          "received_date": "={{$json.received_date}}",
+          "category": "={{$json.final_category}}",
+          "priority_score": "={{$json.final_priority_score}}",
+          "priority_label": "={{$json.priority_label}}",
+          "is_vip": "={{$json.is_vip}}",
+          "action_taken": "={{$json.suggested_action}}",
+          "auto_responded": "={{$json.can_auto_respond}}",
+          "processed_at": "={{$json.processed_at}}"
+        }
+      },
+      "description": "Logs all email processing for analytics and auditing"
+    },
+    {
+      "step": 14,
+      "node_type": "Google Sheets",
+      "name": "Update Daily Metrics",
+      "config": {
+        "operation": "Append",
+        "spreadsheet_id": "YOUR_METRICS_SHEET_ID",
+        "sheet_name": "Email Metrics",
+        "values": [
+          "={{$now.format('YYYY-MM-DD HH:mm')}}",
+          "={{$json.final_category}}",
+          "={{$json.priority_label}}",
+          "={{$json.can_auto_respond ? 'Yes' : 'No'}}",
+          "={{$json.is_vip ? 'Yes' : 'No'}}"
+        ]
+      },
+      "description": "Tracks metrics for analytics dashboard"
+    }
+  ],
+
+  "data_sources": {
+    "input": {
+      "source": "Gmail",
+      "description": "Primary email inbox monitoring for incoming emails"
+    },
+    "databases": {
+      "vip_contacts": {
+        "platform": "Airtable",
+        "table": "VIP Contacts",
+        "fields": ["name", "email", "priority_level", "notification_method", "notification_phone"]
+      },
+      "email_templates": {
+        "platform": "Airtable",
+        "table": "Email Templates",
+        "fields": ["type", "name", "template_subject", "template_body", "active", "usage_count"]
+      },
+      "processing_log": {
+        "platform": "Airtable",
+        "table": "Email Processing Log",
+        "fields": ["email_id", "from", "subject", "category", "priority_score", "action_taken", "processed_at"]
+      },
+      "tasks": {
+        "platform": "Airtable",
+        "table": "Tasks",
+        "fields": ["title", "description", "source", "source_email_id", "priority", "status", "assigned_to"]
+      }
+    }
+  },
+
+  "configuration_required": [
+    "Gmail API connection with OAuth2",
+    "OpenAI API key (GPT-4 access)",
+    "Airtable base with required tables",
+    "Slack workspace webhook URL",
+    "Twilio account for SMS (optional)",
+    "VIP contact list populated in Airtable",
+    "Email response templates created in Airtable",
+    "Gmail labels created: URGENT, ACTION_REQUIRED, AUTO_RESPONDED, NEWSLETTERS, TASK_CREATED, etc."
+  ],
+
+  "customization_options": {
+    "ai_model": "gpt-4",
+    "polling_frequency": "1 minute",
+    "auto_response_enabled": true,
+    "vip_sms_threshold": 9,
+    "archive_newsletters": true,
+    "create_tasks_automatically": true,
+    "slack_notifications": true,
+    "categories": [
+      "urgent",
+      "parent_communication",
+      "staff_communication",
+      "administrative",
+      "newsletter",
+      "low_priority"
+    ],
+    "focus_time_blocking": {
+      "enabled": false,
+      "block_hours": ["9:00-12:00", "14:00-16:00"],
+      "hold_non_urgent": true
+    }
+  },
+
+  "expected_outcomes": {
+    "time_savings": "4-5 hours/day per person",
+    "benefits": [
+      "Zero missed high-priority emails",
+      "60%+ of routine inquiries auto-responded",
+      "Organized inbox with automatic categorization",
+      "Immediate alerts for VIP and urgent emails",
+      "Automatic task creation from actionable emails",
+      "Newsletter clutter eliminated",
+      "Complete audit trail of all email processing",
+      "Real-time analytics on email volume and categories"
+    ],
+    "metrics_tracked": [
+      "Emails processed per day",
+      "Category distribution",
+      "Auto-response rate",
+      "VIP email response time",
+      "Tasks created from emails",
+      "Time saved per category"
+    ]
+  },
+
+  "gmail_labels_to_create": [
+    "URGENT",
+    "ACTION_REQUIRED",
+    "PARENT_COMMUNICATION",
+    "STAFF_COMMUNICATION",
+    "ADMINISTRATIVE",
+    "NEWSLETTERS",
+    "LOW_PRIORITY",
+    "AUTO_RESPONDED",
+    "TASK_CREATED",
+    "VIP"
+  ]
+}

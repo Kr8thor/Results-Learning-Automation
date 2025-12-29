@@ -1,0 +1,406 @@
+{
+  "name": "Task Allocation & Documentation Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "id": "a1b2c3d4-0001-4000-8000-000000000001",
+      "name": "Daily Task Check",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "documentId": "YOUR_GOOGLE_SHEET_ID",
+        "sheetName": "Tasks",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0001-4000-8000-000000000002",
+      "name": "Read Task Submissions",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [460, 300],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse task data and prepare for AI categorization\nconst tasks = [];\n\nfor (const item of $input.all()) {\n  const data = item.json;\n  \n  // Skip if already processed\n  if (data.Status === 'Processed' || data.Status === 'Allocated') {\n    continue;\n  }\n  \n  tasks.push({\n    taskId: data.TaskID || data['Task ID'] || `TASK-${Date.now()}`,\n    description: data.Description || data.TaskDescription || '',\n    submittedBy: data.SubmittedBy || data['Submitted By'] || 'Unknown',\n    submissionDate: data.Date || data.SubmissionDate || new Date().toISOString(),\n    estimatedTime: data.EstimatedTime || data['Estimated Hours'] || null,\n    priority: data.Priority || 'Medium',\n    project: data.Project || data.ProjectCode || '',\n    notes: data.Notes || ''\n  });\n}\n\nreturn tasks.map(task => ({ json: task }));"
+      },
+      "id": "a1b2c3d4-0001-4000-8000-000000000003",
+      "name": "Parse Task Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.description }}",
+              "operation": "isNotEmpty"
+            }
+          ]
+        }
+      },
+      "id": "a1b2c3d4-0001-4000-8000-000000000004",
+      "name": "Filter Valid Tasks",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "resource": "chat",
+        "model": "gpt-4o-mini",
+        "messages": {
+          "values": [
+            {
+              "content": "=You are a task categorization assistant for Results Learning, an education company. Analyze the following task and categorize it.\n\nTask Description: {{ $json.description }}\nProject: {{ $json.project }}\nSubmitted By: {{ $json.submittedBy }}\nNotes: {{ $json.notes }}\n\nCategorize into one department:\n- Administration\n- Curriculum\n- Student Services\n- Marketing\n- Technology\n- Finance\n- HR\n- Operations\n\nRespond ONLY with valid JSON:\n{\"department\": \"Department Name\", \"confidence\": 0.95, \"suggestedTimeHours\": 2, \"priority\": \"Medium\", \"tags\": [\"tag1\"], \"reasoning\": \"Brief explanation\"}"
+            }
+          ]
+        },
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "id": "a1b2c3d4-0001-4000-8000-000000000005",
+      "name": "AI Categorization",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [1120, 200],
+      "credentials": {
+        "openAiApi": {
+          "id": "YOUR_OPENAI_CREDENTIAL_ID",
+          "name": "OpenAI"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Merge AI response with original task data\nconst items = [];\n\nfor (const item of $input.all()) {\n  let aiResponse;\n  \n  try {\n    const responseText = item.json.message?.content || item.json.choices?.[0]?.message?.content || '{}';\n    const jsonMatch = responseText.match(/\\{[\\s\\S]*\\}/);\n    aiResponse = jsonMatch ? JSON.parse(jsonMatch[0]) : { department: 'Administration', confidence: 0.5 };\n  } catch (e) {\n    aiResponse = { department: 'Administration', confidence: 0.5, priority: 'Medium', tags: ['uncategorized'] };\n  }\n  \n  // Get original task data from previous node\n  const originalTask = $('Parse Task Data').first().json;\n  \n  items.push({\n    json: {\n      taskId: originalTask.taskId,\n      description: originalTask.description,\n      submittedBy: originalTask.submittedBy,\n      submissionDate: originalTask.submissionDate,\n      allocatedDepartment: aiResponse.department,\n      confidence: aiResponse.confidence,\n      estimatedHours: originalTask.estimatedTime || aiResponse.suggestedTimeHours || 1,\n      priority: aiResponse.priority || 'Medium',\n      tags: (aiResponse.tags || []).join(', '),\n      reasoning: aiResponse.reasoning || '',\n      needsReview: (aiResponse.confidence || 0) < 0.8,\n      processedAt: new Date().toISOString()\n    }\n  });\n}\n\nreturn items;"
+      },
+      "id": "a1b2c3d4-0001-4000-8000-000000000006",
+      "name": "Merge AI Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1340, 200]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.needsReview }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "a1b2c3d4-0001-4000-8000-000000000007",
+      "name": "Needs Review?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1560, 200]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": "YOUR_GOOGLE_SHEET_ID",
+        "sheetName": "Allocated Tasks",
+        "columns": "Task ID, Description, Submitted By, Date, Department, Estimated Hours, Priority, Tags, Status, Confidence, Processed At",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0001-4000-8000-000000000008",
+      "name": "Log Allocated Tasks",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [1780, 100],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": "YOUR_GOOGLE_SHEET_ID",
+        "sheetName": "Review Queue",
+        "columns": "Task ID, Description, Submitted By, Suggested Department, Confidence, AI Reasoning, Priority, Status, Added At",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0001-4000-8000-000000000009",
+      "name": "Add to Review Queue",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [1780, 300],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "channel": "#task-updates",
+        "text": "=:clipboard: *New Task Allocated*\n*Task:* {{ $json.description }}\n*Department:* {{ $json.allocatedDepartment }}\n*Priority:* {{ $json.priority }}\n*Estimated Time:* {{ $json.estimatedHours }} hours",
+        "otherOptions": {}
+      },
+      "id": "a1b2c3d4-0001-4000-8000-000000000010",
+      "name": "Notify Slack Allocated",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2,
+      "position": [2000, 100],
+      "credentials": {
+        "slackApi": {
+          "id": "YOUR_SLACK_CREDENTIAL_ID",
+          "name": "Slack"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "channel": "#task-reviews",
+        "text": "=:warning: *Task Needs Review*\n*Task:* {{ $json.description }}\n*Suggested Department:* {{ $json.allocatedDepartment }}\n*Confidence:* {{ $json.confidence }}\n*Reasoning:* {{ $json.reasoning }}",
+        "otherOptions": {}
+      },
+      "id": "a1b2c3d4-0001-4000-8000-000000000011",
+      "name": "Notify Slack Review",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2,
+      "position": [2000, 300],
+      "credentials": {
+        "slackApi": {
+          "id": "YOUR_SLACK_CREDENTIAL_ID",
+          "name": "Slack"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 17
+            }
+          ]
+        }
+      },
+      "id": "a1b2c3d4-0001-4000-8000-000000000012",
+      "name": "Daily Summary Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 560]
+    },
+    {
+      "parameters": {
+        "documentId": "YOUR_GOOGLE_SHEET_ID",
+        "sheetName": "Allocated Tasks",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0001-4000-8000-000000000013",
+      "name": "Read Today Tasks",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [460, 560],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Generate daily summary report\nconst today = new Date().toISOString().split('T')[0];\nconst allTasks = $input.all().map(i => i.json);\n\nconst todaysTasks = allTasks.filter(task => {\n  const taskDate = task['Processed At'] || task.Date || '';\n  return taskDate.startsWith(today);\n});\n\nconst deptSummary = {};\nlet totalHours = 0;\n\nfor (const task of todaysTasks) {\n  const dept = task.Department || 'Unassigned';\n  const hours = parseFloat(task['Estimated Hours']) || 0;\n  \n  if (!deptSummary[dept]) {\n    deptSummary[dept] = { count: 0, hours: 0 };\n  }\n  deptSummary[dept].count++;\n  deptSummary[dept].hours += hours;\n  totalHours += hours;\n}\n\nlet summaryText = `*Daily Task Summary - ${today}*\\n\\n`;\nsummaryText += `Total Tasks: ${todaysTasks.length}\\nTotal Hours: ${totalHours.toFixed(1)}\\n\\n*By Department:*\\n`;\n\nfor (const [dept, data] of Object.entries(deptSummary)) {\n  summaryText += `• ${dept}: ${data.count} tasks (${data.hours.toFixed(1)} hrs)\\n`;\n}\n\nreturn [{ json: { summaryText, date: today, totalTasks: todaysTasks.length, totalHours } }];"
+      },
+      "id": "a1b2c3d4-0001-4000-8000-000000000014",
+      "name": "Generate Daily Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 560]
+    },
+    {
+      "parameters": {
+        "channel": "#daily-reports",
+        "text": "={{ $json.summaryText }}",
+        "otherOptions": {}
+      },
+      "id": "a1b2c3d4-0001-4000-8000-000000000015",
+      "name": "Post Daily Summary",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2,
+      "position": [900, 560],
+      "credentials": {
+        "slackApi": {
+          "id": "YOUR_SLACK_CREDENTIAL_ID",
+          "name": "Slack"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Daily Task Check": {
+      "main": [
+        [
+          {
+            "node": "Read Task Submissions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Task Submissions": {
+      "main": [
+        [
+          {
+            "node": "Parse Task Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Task Data": {
+      "main": [
+        [
+          {
+            "node": "Filter Valid Tasks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Valid Tasks": {
+      "main": [
+        [
+          {
+            "node": "AI Categorization",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Categorization": {
+      "main": [
+        [
+          {
+            "node": "Merge AI Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge AI Results": {
+      "main": [
+        [
+          {
+            "node": "Needs Review?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Needs Review?": {
+      "main": [
+        [
+          {
+            "node": "Add to Review Queue",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Allocated Tasks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Allocated Tasks": {
+      "main": [
+        [
+          {
+            "node": "Notify Slack Allocated",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add to Review Queue": {
+      "main": [
+        [
+          {
+            "node": "Notify Slack Review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily Summary Trigger": {
+      "main": [
+        [
+          {
+            "node": "Read Today Tasks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Today Tasks": {
+      "main": [
+        [
+          {
+            "node": "Generate Daily Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Daily Summary": {
+      "main": [
+        [
+          {
+            "node": "Post Daily Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "instanceId": "results-learning-automation"
+  }
+}

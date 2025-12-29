@@ -1,0 +1,428 @@
+{
+  "name": "Automated Task Logging & Department Allocation System",
+  "description": "Multi-channel task capture system that automatically logs tasks, tracks time, allocates to departments using AI, and generates end-of-day summaries",
+  "trigger": "Multiple triggers: Voice, Email, Form, Slack, Calendar",
+  "platform": "n8n",
+
+  "workflow_steps": [
+    {
+      "step": 1,
+      "node_type": "Webhook (Multiple)",
+      "name": "Multi-Channel Task Input",
+      "config": {
+        "webhooks": [
+          {
+            "name": "Web Form Submission",
+            "path": "/task/submit",
+            "method": "POST"
+          },
+          {
+            "name": "Voice Note Upload",
+            "path": "/task/voice",
+            "method": "POST"
+          },
+          {
+            "name": "Email Forward",
+            "path": "/task/email",
+            "method": "POST"
+          },
+          {
+            "name": "Slack Command",
+            "path": "/task/slack",
+            "method": "POST"
+          }
+        ]
+      },
+      "description": "Receives task submissions from multiple input channels"
+    },
+    {
+      "step": 2,
+      "node_type": "Switch",
+      "name": "Route by Input Type",
+      "config": {
+        "rules": [
+          { "output": 0, "expression": "={{$json.type === 'voice'}}" },
+          { "output": 1, "expression": "={{$json.type === 'email'}}" },
+          { "output": 2, "expression": "={{$json.type === 'slack'}}" },
+          { "output": 3, "expression": "={{$json.type === 'calendar'}}" },
+          { "output": 4, "expression": "={{$json.type === 'form'}}" }
+        ]
+      },
+      "description": "Routes to appropriate processing based on input type"
+    },
+    {
+      "step": "3a",
+      "path": "voice",
+      "node_type": "OpenAI",
+      "name": "Transcribe Voice Note",
+      "config": {
+        "model": "whisper-1",
+        "operation": "Transcribe Audio",
+        "audio_file": "={{$json.audio_url}}"
+      }
+    },
+    {
+      "step": "3b",
+      "path": "voice",
+      "node_type": "Set",
+      "name": "Format Voice Data",
+      "config": {
+        "values": {
+          "task_description": "={{$input.first().json.text}}",
+          "input_method": "voice",
+          "raw_input": "={{$input.first().json.text}}"
+        }
+      }
+    },
+    {
+      "step": "4a",
+      "path": "email",
+      "node_type": "Function",
+      "name": "Parse Email Content",
+      "code": "const email = $input.first().json;\n\n// Extract task from subject or body\nconst taskDescription = email.subject.replace(/^Task:/i, '').trim() || \n                        email.body.split('\\n')[0].trim();\n\nreturn {\n  json: {\n    task_description: taskDescription,\n    input_method: 'email',\n    raw_input: email.body,\n    from_email: email.from\n  }\n};"
+    },
+    {
+      "step": "5a",
+      "path": "slack",
+      "node_type": "Function",
+      "name": "Parse Slack Command",
+      "code": "const slack = $input.first().json;\n\n// Parse /logtask command\nconst taskDescription = slack.text.replace(/^\\/logtask/i, '').trim();\n\nreturn {\n  json: {\n    task_description: taskDescription,\n    input_method: 'slack',\n    raw_input: slack.text,\n    slack_user: slack.user_name,\n    slack_channel: slack.channel_name\n  }\n};"
+    },
+    {
+      "step": "6a",
+      "path": "calendar",
+      "node_type": "Function",
+      "name": "Parse Calendar Event",
+      "code": "const event = $input.first().json;\n\n// Extract task from calendar event\nconst taskDescription = event.summary;\nconst duration = (new Date(event.end.dateTime) - new Date(event.start.dateTime)) / 1000 / 60; // minutes\n\nreturn {\n  json: {\n    task_description: taskDescription,\n    input_method: 'calendar',\n    raw_input: event.description || '',\n    duration_minutes: duration,\n    event_start: event.start.dateTime,\n    event_end: event.end.dateTime\n  }\n};"
+    },
+    {
+      "step": "7a",
+      "path": "form",
+      "node_type": "Set",
+      "name": "Pass Through Form Data",
+      "config": {
+        "values": {
+          "task_description": "={{$json.description}}",
+          "input_method": "form",
+          "raw_input": "={{$json.description}}",
+          "user_id": "={{$json.user_id}}",
+          "manual_duration": "={{$json.duration_minutes}}"
+        }
+      }
+    },
+    {
+      "step": 8,
+      "node_type": "Merge",
+      "name": "Merge All Input Types"
+    },
+    {
+      "step": 9,
+      "node_type": "OpenAI",
+      "name": "AI Task Analysis",
+      "config": {
+        "model": "gpt-4",
+        "messages": [
+          {
+            "role": "system",
+            "content": "You are a task categorization assistant for an educational organization. Analyze the task and return ONLY a JSON object:\n\n{\n  \"task_summary\": \"Brief 5-10 word summary\",\n  \"category\": \"teaching\" | \"administrative\" | \"parent_engagement\" | \"student_services\" | \"professional_development\" | \"operations\",\n  \"department\": \"Instruction/Teaching\" | \"Administrative\" | \"Parent Engagement\" | \"Student Services\" | \"Professional Development\" | \"Operations/Facilities\",\n  \"subcategory\": \"specific subcategory\",\n  \"estimated_duration_minutes\": number,\n  \"keywords\": [\"relevant\", \"keywords\"],\n  \"is_student_related\": true | false,\n  \"student_impact\": \"direct\" | \"indirect\" | \"none\",\n  \"confidence_score\": 0.0-1.0,\n  \"requires_split_allocation\": true | false,\n  \"split_percentages\": {\"Department1\": 50, \"Department2\": 50} or null\n}\n\nDepartment allocation rules:\n- Teaching/tutoring activities → Instruction/Teaching\n- Parent calls/emails → Parent Engagement\n- Student progress meetings → Student Services\n- Administrative paperwork → Administrative\n- Professional learning → Professional Development\n- Facility/operations work → Operations/Facilities"
+          },
+          {
+            "role": "user",
+            "content": "Task: {{$json.task_description}}"
+          }
+        ],
+        "response_format": { "type": "json_object" }
+      },
+      "description": "AI analyzes task and suggests categorization and department allocation"
+    },
+    {
+      "step": 10,
+      "node_type": "Airtable",
+      "name": "Check Similar Historical Tasks",
+      "config": {
+        "operation": "Search",
+        "base_id": "YOUR_AIRTABLE_BASE_ID",
+        "table": "Task History",
+        "filter_formula": "OR(SEARCH('{{$json.keywords[0]}}', {description}), SEARCH('{{$json.keywords[1]}}', {description}))",
+        "max_records": 5,
+        "sort": [{"field": "created_date", "direction": "desc"}]
+      },
+      "description": "Finds similar past tasks to improve allocation accuracy"
+    },
+    {
+      "step": 11,
+      "node_type": "Function",
+      "name": "Calculate Final Allocation",
+      "code": "const inputData = $('Merge All Input Types').item.json;\nconst aiAnalysis = JSON.parse($('AI Task Analysis').item.json.choices[0].message.content);\nconst historicalTasks = $('Check Similar Historical Tasks').all();\n\n// Get user info\nconst userId = inputData.user_id || 'system';\nconst currentTime = new Date();\n\n// Calculate duration\nlet durationMinutes = inputData.manual_duration || \n                      inputData.duration_minutes || \n                      aiAnalysis.estimated_duration_minutes || \n                      30; // default\n\n// Improve allocation with historical data\nlet finalDepartment = aiAnalysis.department;\nlet confidenceScore = aiAnalysis.confidence_score;\n\nif (historicalTasks.length > 0) {\n  // Get most common department from similar tasks\n  const deptCounts = {};\n  historicalTasks.forEach(task => {\n    const dept = task.json.department;\n    deptCounts[dept] = (deptCounts[dept] || 0) + 1;\n  });\n  \n  const mostCommonDept = Object.keys(deptCounts).reduce((a, b) => \n    deptCounts[a] > deptCounts[b] ? a : b\n  );\n  \n  // If historical data strongly suggests different department, use it\n  if (deptCounts[mostCommonDept] >= 3 && mostCommonDept !== finalDepartment) {\n    finalDepartment = mostCommonDept;\n    confidenceScore = Math.min(0.95, confidenceScore + 0.2);\n  }\n}\n\nconst task = {\n  // Original data\n  description: inputData.task_description,\n  raw_input: inputData.raw_input,\n  input_method: inputData.input_method,\n  user_id: userId,\n  \n  // AI Analysis\n  task_summary: aiAnalysis.task_summary,\n  category: aiAnalysis.category,\n  subcategory: aiAnalysis.subcategory,\n  keywords: aiAnalysis.keywords,\n  \n  // Department Allocation\n  department: finalDepartment,\n  requires_split: aiAnalysis.requires_split_allocation,\n  split_percentages: aiAnalysis.split_percentages,\n  allocation_confidence: confidenceScore,\n  auto_allocated: true,\n  \n  // Time Tracking\n  duration_minutes: durationMinutes,\n  estimated_duration: aiAnalysis.estimated_duration_minutes,\n  \n  // Student Impact\n  is_student_related: aiAnalysis.is_student_related,\n  student_impact: aiAnalysis.student_impact,\n  \n  // Metadata\n  created_at: currentTime.toISOString(),\n  date: currentTime.toISOString().split('T')[0],\n  logged_at: currentTime.toISOString(),\n  status: 'completed',\n  \n  // Historical context\n  similar_tasks_found: historicalTasks.length,\n  learning_applied: historicalTasks.length >= 3\n};\n\nreturn { json: task };"
+    },
+    {
+      "step": 12,
+      "node_type": "IF",
+      "name": "Check Confidence Level",
+      "config": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{$json.allocation_confidence}}",
+              "operation": "smaller",
+              "value2": 0.7
+            }
+          ]
+        }
+      },
+      "description": "Flag low confidence allocations for manual review"
+    },
+    {
+      "step": "13a",
+      "path": "low_confidence",
+      "node_type": "Set",
+      "name": "Flag for Manual Review",
+      "config": {
+        "values": {
+          "requires_review": true,
+          "review_reason": "Low confidence allocation ({{$json.allocation_confidence}})"
+        }
+      }
+    },
+    {
+      "step": "13b",
+      "path": "low_confidence",
+      "node_type": "Slack",
+      "name": "Request Review in Slack",
+      "config": {
+        "channel": "#task-review",
+        "text": "⚠️ *Task needs department review*\n\n*Task:* {{$json.task_summary}}\n*Description:* {{$json.description}}\n*AI Suggested:* {{$json.department}} ({{Math.round($json.allocation_confidence * 100)}}% confidence)\n\nPlease review and confirm allocation.",
+        "attachments": [
+          {
+            "text": "Quick Actions",
+            "callback_id": "task_allocation",
+            "actions": [
+              {"name": "confirm", "text": "Confirm", "type": "button", "value": "confirm"},
+              {"name": "change", "text": "Change Dept", "type": "button", "value": "change"}
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "step": 14,
+      "node_type": "Merge",
+      "name": "Merge Confidence Paths"
+    },
+    {
+      "step": 15,
+      "node_type": "Airtable",
+      "name": "Create Task Record",
+      "config": {
+        "operation": "Create",
+        "base_id": "YOUR_AIRTABLE_BASE_ID",
+        "table": "Tasks",
+        "fields": {
+          "description": "={{$json.description}}",
+          "summary": "={{$json.task_summary}}",
+          "category": "={{$json.category}}",
+          "subcategory": "={{$json.subcategory}}",
+          "department": "={{$json.department}}",
+          "requires_split": "={{$json.requires_split}}",
+          "split_percentages": "={{JSON.stringify($json.split_percentages)}}",
+          "duration_minutes": "={{$json.duration_minutes}}",
+          "user_id": "={{$json.user_id}}",
+          "input_method": "={{$json.input_method}}",
+          "date": "={{$json.date}}",
+          "is_student_related": "={{$json.is_student_related}}",
+          "student_impact": "={{$json.student_impact}}",
+          "allocation_confidence": "={{$json.allocation_confidence}}",
+          "auto_allocated": "={{$json.auto_allocated}}",
+          "requires_review": "={{$json.requires_review || false}}",
+          "status": "completed",
+          "created_at": "={{$json.created_at}}"
+        }
+      },
+      "description": "Stores task in central database"
+    },
+    {
+      "step": 16,
+      "node_type": "Airtable",
+      "name": "Update Task History (for learning)",
+      "config": {
+        "operation": "Create",
+        "base_id": "YOUR_AIRTABLE_BASE_ID",
+        "table": "Task History",
+        "fields": {
+          "description": "={{$json.description}}",
+          "department": "={{$json.department}}",
+          "keywords": "={{$json.keywords.join(', ')}}",
+          "duration_minutes": "={{$json.duration_minutes}}",
+          "created_date": "={{$json.created_at}}"
+        }
+      },
+      "description": "Adds to historical database for pattern learning"
+    },
+    {
+      "step": 17,
+      "node_type": "Google Sheets",
+      "name": "Update Daily Time Tracking",
+      "config": {
+        "operation": "Append",
+        "spreadsheet_id": "YOUR_TIMESHEET_ID",
+        "sheet_name": "Time Logs",
+        "values": [
+          "={{$json.date}}",
+          "={{$json.user_id}}",
+          "={{$json.task_summary}}",
+          "={{$json.department}}",
+          "={{$json.duration_minutes}}",
+          "={{$json.input_method}}",
+          "={{$json.created_at}}"
+        ]
+      },
+      "description": "Logs time entry to timesheet for reporting"
+    },
+    {
+      "step": 18,
+      "node_type": "Function",
+      "name": "Send Success Response",
+      "code": "const task = $input.first().json;\n\nconst response = {\n  success: true,\n  message: 'Task logged successfully! ✅',\n  task_id: task.airtable_id,\n  details: {\n    summary: task.task_summary,\n    department: task.department,\n    duration: `${task.duration_minutes} minutes`,\n    confidence: `${Math.round(task.allocation_confidence * 100)}%`,\n    requires_review: task.requires_review || false\n  },\n  quick_stats: {\n    time_logged_today: '(calculated separately)',\n    tasks_logged_today: '(calculated separately)'\n  }\n};\n\n// Format response based on input method\nif (task.input_method === 'slack') {\n  return {\n    json: {\n      text: `✅ *Task Logged*\\n\\n*Summary:* ${task.task_summary}\\n*Department:* ${task.department}\\n*Duration:* ${task.duration_minutes} min\\n*Confidence:* ${Math.round(task.allocation_confidence * 100)}%${task.requires_review ? '\\n⚠️ *Flagged for review*' : ''}`\n    }\n  };\n} else if (task.input_method === 'voice') {\n  return {\n    json: {\n      message: `Task logged: ${task.task_summary} - ${task.duration_minutes} minutes in ${task.department}`\n    }\n  };\n} else {\n  return { json: response };\n}",
+      "description": "Sends confirmation response appropriate to input method"
+    }
+  ],
+
+  "scheduled_workflow": {
+    "name": "End of Day Summary Generator",
+    "trigger": "Schedule: Daily at 5:00 PM",
+    "steps": [
+      {
+        "step": 1,
+        "node_type": "Schedule Trigger",
+        "config": {
+          "cron": "0 17 * * 1-5",
+          "timezone": "America/New_York"
+        }
+      },
+      {
+        "step": 2,
+        "node_type": "Airtable",
+        "config": {
+          "operation": "Search",
+          "table": "Tasks",
+          "filter_formula": "AND({date} = '{{$now.format('YYYY-MM-DD')}}', {status} = 'completed')"
+        }
+      },
+      {
+        "step": 3,
+        "node_type": "Function",
+        "name": "Calculate Department Summary",
+        "code": "const tasks = $input.all();\n\nconst summary = {\n  date: new Date().toISOString().split('T')[0],\n  total_tasks: tasks.length,\n  total_minutes: 0,\n  by_department: {},\n  by_category: {},\n  by_user: {},\n  student_related: 0,\n  tasks_requiring_review: 0\n};\n\ntasks.forEach(task => {\n  const t = task.json;\n  \n  // Total time\n  summary.total_minutes += t.duration_minutes;\n  \n  // By department\n  if (!summary.by_department[t.department]) {\n    summary.by_department[t.department] = { count: 0, minutes: 0 };\n  }\n  summary.by_department[t.department].count++;\n  summary.by_department[t.department].minutes += t.duration_minutes;\n  \n  // By category\n  if (!summary.by_category[t.category]) {\n    summary.by_category[t.category] = { count: 0, minutes: 0 };\n  }\n  summary.by_category[t.category].count++;\n  summary.by_category[t.category].minutes += t.duration_minutes;\n  \n  // By user\n  if (!summary.by_user[t.user_id]) {\n    summary.by_user[t.user_id] = { count: 0, minutes: 0 };\n  }\n  summary.by_user[t.user_id].count++;\n  summary.by_user[t.user_id].minutes += t.duration_minutes;\n  \n  // Student related\n  if (t.is_student_related) summary.student_related++;\n  \n  // Needs review\n  if (t.requires_review) summary.tasks_requiring_review++;\n});\n\nsummary.total_hours = (summary.total_minutes / 60).toFixed(1);\n\nreturn { json: summary };"
+      },
+      {
+        "step": 4,
+        "node_type": "Gmail",
+        "name": "Send Daily Summary Email",
+        "config": {
+          "to": "staff@resultslearning.com",
+          "subject": "Daily Task Summary - {{$now.format('MMM DD, YYYY')}}",
+          "html_body": "<!DOCTYPE html>\n<html>\n<body>\n  <h2>Daily Task Summary - {{$now.format('MMMM DD, YYYY')}}</h2>\n  \n  <h3>Overview</h3>\n  <ul>\n    <li><strong>Total Tasks:</strong> {{$json.total_tasks}}</li>\n    <li><strong>Total Time:</strong> {{$json.total_hours}} hours ({{$json.total_minutes}} minutes)</li>\n    <li><strong>Student-Related Tasks:</strong> {{$json.student_related}}</li>\n    {{#if $json.tasks_requiring_review}}\n    <li style=\"color: #ff9800;\"><strong>Tasks Needing Review:</strong> {{$json.tasks_requiring_review}}</li>\n    {{/if}}\n  </ul>\n  \n  <h3>Time by Department</h3>\n  <table border=\"1\" cellpadding=\"10\">\n    <tr><th>Department</th><th>Tasks</th><th>Hours</th></tr>\n    {{#each $json.by_department}}\n    <tr>\n      <td>{{@key}}</td>\n      <td>{{this.count}}</td>\n      <td>{{divide this.minutes 60}}h</td>\n    </tr>\n    {{/each}}\n  </table>\n  \n  <p><a href=\"https://airtable.com/YOUR_BASE/Tasks\">View Full Task Dashboard</a></p>\n</body>\n</html>"
+        }
+      },
+      {
+        "step": 5,
+        "node_type": "Airtable",
+        "name": "Create Daily Summary Record",
+        "config": {
+          "operation": "Create",
+          "table": "Daily Summaries",
+          "fields": {
+            "date": "={{$json.date}}",
+            "total_tasks": "={{$json.total_tasks}}",
+            "total_minutes": "={{$json.total_minutes}}",
+            "department_breakdown": "={{JSON.stringify($json.by_department)}}",
+            "student_related_count": "={{$json.student_related}}",
+            "tasks_needing_review": "={{$json.tasks_requiring_review}}"
+          }
+        }
+      }
+    ]
+  },
+
+  "data_sources": {
+    "input_channels": [
+      "Web form (quick-add widget)",
+      "Voice notes (mobile app or phone call)",
+      "Email forwarding (tasks@yourdomain.com)",
+      "Slack commands (/logtask)",
+      "Calendar event detection",
+      "Manual entry form"
+    ],
+    "databases": {
+      "tasks": {
+        "platform": "Airtable",
+        "table": "Tasks",
+        "fields": [
+          "description", "summary", "category", "subcategory", "department",
+          "duration_minutes", "user_id", "date", "input_method",
+          "allocation_confidence", "auto_allocated", "requires_review",
+          "is_student_related", "student_impact", "status", "created_at"
+        ]
+      },
+      "task_history": {
+        "platform": "Airtable",
+        "description": "Historical database for pattern learning and improved allocation"
+      },
+      "daily_summaries": {
+        "platform": "Airtable",
+        "description": "Aggregated daily summaries for reporting"
+      }
+    }
+  },
+
+  "configuration_required": [
+    "Webhook URLs for each input channel",
+    "OpenAI API key (GPT-4 + Whisper)",
+    "Airtable base with Tasks, Task History, Daily Summaries tables",
+    "Google Sheets for time tracking",
+    "Gmail for daily summaries",
+    "Slack workspace for notifications and commands",
+    "Web form widget embedded on internal site",
+    "Department list and allocation rules configured"
+  ],
+
+  "departments": [
+    "Instruction/Teaching",
+    "Administrative",
+    "Parent Engagement",
+    "Student Services",
+    "Professional Development",
+    "Operations/Facilities"
+  ],
+
+  "input_examples": {
+    "voice": "I just spent 45 minutes calling parents about upcoming parent-teacher conferences",
+    "email": "Task: Created lesson plans for next week's math units - 2 hours",
+    "slack": "/logtask Met with student about attendance concerns - 30 minutes",
+    "form": "Description: Graded homework assignments | Duration: 60 minutes",
+    "calendar": "Event: Professional development workshop on reading strategies (9:00 AM - 12:00 PM)"
+  },
+
+  "expected_outcomes": {
+    "time_savings": "90% reduction in manual documentation time",
+    "benefits": [
+      "Under 30 seconds to log a task (any method)",
+      "90%+ automatic department allocation accuracy",
+      "Zero manual time calculations",
+      "Automatic daily summaries generated",
+      "Complete historical database for pattern learning",
+      "Real-time workload visibility",
+      "Multi-channel flexibility (log tasks however you prefer)",
+      "AI learns from historical data for improved accuracy",
+      "Automatic flagging of low-confidence allocations"
+    ],
+    "metrics_tracked": [
+      "Tasks logged per day/week/month",
+      "Time by department",
+      "Average allocation confidence",
+      "Manual review rate",
+      "Input method distribution",
+      "Student-related task percentage"
+    ]
+  }
+}

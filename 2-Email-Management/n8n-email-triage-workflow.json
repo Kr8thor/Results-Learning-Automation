@@ -1,0 +1,421 @@
+{
+  "name": "Email Triage & Management Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {
+          "readStatus": "unread"
+        }
+      },
+      "id": "92b3139d-3a16-4a7a-b9c5-b69ba09eca78",
+      "name": "Gmail Trigger",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "9MiEWTcEqXxZwwVC",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract email metadata and check VIP status\n// VIP list is hardcoded for now - can be replaced with Google Sheets lookup\nconst VIP_EMAILS = [\n  'cfeingold@results-learning.com',\n  'principal@results-learning.com',\n  'superintendent@district.edu'\n  // Add more VIP emails here\n].map(e => e.toLowerCase());\n\nconst items = [];\n\nfor (const item of $input.all()) {\n  const email = item.json;\n  \n  const fromEmail = (email.from?.email || email.from || '').toLowerCase();\n  const isVIP = VIP_EMAILS.includes(fromEmail);\n  \n  items.push({\n    json: {\n      id: email.id,\n      threadId: email.threadId,\n      from: email.from?.email || email.from || '',\n      fromName: email.from?.name || '',\n      to: email.to || '',\n      subject: email.subject || '',\n      snippet: email.snippet || '',\n      body: email.text || email.html || '',\n      date: email.date || new Date().toISOString(),\n      labels: email.labelIds || [],\n      hasAttachments: (email.attachments || []).length > 0,\n      isVIP: isVIP,\n      vipPriority: isVIP ? 'HIGH' : 'NORMAL'\n    }\n  });\n}\n\nreturn items;"
+      },
+      "id": "0332b1b8-d5f1-4e54-9733-c1c2eeaab8e2",
+      "name": "Extract Email Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [224, 0]
+    },
+    {
+      "parameters": {
+        "resource": "chat",
+        "model": "gpt-4o-mini",
+        "messages": {
+          "values": [
+            {
+              "content": "=Analyze this email and categorize it.\n\nFrom: {{ $json.from }}\nSubject: {{ $json.subject }}\nContent: {{ $json.snippet }}\n\nCategories:\n1. URGENT - Time-sensitive, requires immediate action\n2. PARENT - Communication from parents/guardians\n3. STAFF - Internal staff communication\n4. STUDENT - Student-related inquiries\n5. ADMIN - Administrative tasks\n6. VENDOR - External vendors/suppliers\n7. NEWSLETTER - Newsletters/marketing\n8. LOW_PRIORITY - Can wait, informational\n\nRespond ONLY with JSON:\n{\"category\": \"CATEGORY_NAME\", \"priority\": \"HIGH/MEDIUM/LOW\", \"suggestedAction\": \"reply/forward/archive/schedule\", \"autoReplyEligible\": true/false, \"summary\": \"brief 1-sentence summary\"}"
+            }
+          ]
+        },
+        "options": {
+          "temperature": 0.3
+        },
+        "requestOptions": {}
+      },
+      "id": "582109bc-ee5c-4ba0-8b38-2606a95739f7",
+      "name": "AI Categorize Email",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [448, 0],
+      "credentials": {
+        "openAiApi": {
+          "id": "dfx352gSqCfsESiw",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse AI categorization and merge with email data\nconst emailData = $('Extract Email Data').first().json;\nlet aiResponse;\n\ntry {\n  const responseText = $input.first().json.message?.content || $input.first().json.choices?.[0]?.message?.content || '{}';\n  const jsonMatch = responseText.match(/\\{[\\s\\S]*\\}/);\n  aiResponse = jsonMatch ? JSON.parse(jsonMatch[0]) : {};\n} catch (e) {\n  aiResponse = { category: 'ADMIN', priority: 'MEDIUM', suggestedAction: 'reply', autoReplyEligible: false };\n}\n\n// Override priority if VIP\nif (emailData.isVIP) {\n  aiResponse.priority = 'HIGH';\n}\n\nreturn [{\n  json: {\n    ...emailData,\n    category: aiResponse.category || 'ADMIN',\n    priority: aiResponse.priority || 'MEDIUM',\n    suggestedAction: aiResponse.suggestedAction || 'reply',\n    autoReplyEligible: aiResponse.autoReplyEligible || false,\n    aiSummary: aiResponse.summary || '',\n    processedAt: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "4adaf8bb-7aed-4e44-9a3c-3a74f9d353ca",
+      "name": "Merge Categorization",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [672, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.priority }}",
+              "value2": "HIGH"
+            }
+          ]
+        }
+      },
+      "id": "3fa89f4f-7600-4edf-b0ad-c80b9aaea59c",
+      "name": "Is Urgent?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [896, 0]
+    },
+    {
+      "parameters": {
+        "sendTo": "cfeingold@results-learning.com",
+        "subject": "=URGENT: {{ $json.subject }}",
+        "message": "=URGENT EMAIL ALERT\n\nFrom: {{ $json.from }}\nSubject: {{ $json.subject }}\nCategory: {{ $json.category }}\n{{ $json.isVIP ? 'VIP SENDER' : '' }}\n\nSummary: {{ $json.aiSummary }}\n\nSuggested Action: {{ $json.suggestedAction }}",
+        "options": {}
+      },
+      "id": "87c859b5-2772-415e-94c1-ad977a7368e4",
+      "name": "Send Urgent Alert",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [1120, -100],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "9MiEWTcEqXxZwwVC",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.autoReplyEligible }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "e121272a-e93c-43c1-b05e-895a7c2adbf8",
+      "name": "Auto-Reply Eligible?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1120, 100]
+    },
+    {
+      "parameters": {
+        "resource": "chat",
+        "model": "gpt-4o-mini",
+        "messages": {
+          "values": [
+            {
+              "content": "=Generate a professional auto-reply for this email.\n\nOriginal Email From: {{ $json.from }}\nSubject: {{ $json.subject }}\nCategory: {{ $json.category }}\nSummary: {{ $json.aiSummary }}\n\nWrite a brief, professional response acknowledging receipt and setting expectations. Keep it under 100 words. Sign off as Results Learning."
+            }
+          ]
+        },
+        "options": {
+          "temperature": 0.7
+        },
+        "requestOptions": {}
+      },
+      "id": "1b3c7054-b1ca-49b6-95dd-d500bb46c03b",
+      "name": "Generate Auto Reply",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [1344, 0],
+      "credentials": {
+        "openAiApi": {
+          "id": "dfx352gSqCfsESiw",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Merge Categorization').first().json.from }}",
+        "subject": "=Re: {{ $('Merge Categorization').first().json.subject }}",
+        "message": "={{ $json.message?.content || $json.choices?.[0]?.message?.content || 'Thank you for your email. We have received your message and will respond shortly.' }}",
+        "options": {
+          "replyToSenderOnly": true
+        }
+      },
+      "id": "5097a0e4-9dfe-4330-883f-44ae26cdc027",
+      "name": "Send Auto Reply",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [1568, 0],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "9MiEWTcEqXxZwwVC",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": "YOUR_GOOGLE_SHEET_ID",
+        "sheetName": "Email Log",
+        "columns": "Date, From, Subject, Category, Priority, Is VIP, Auto Reply Sent, AI Summary",
+        "options": {}
+      },
+      "id": "0393090f-a85b-4a5a-8026-68e2cbbba54b",
+      "name": "Log Email",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [1568, 200],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "HNB3Dw6W9CONXlfX",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 18
+            }
+          ]
+        }
+      },
+      "id": "8fe14405-8e9e-4f18-a3cc-c06726078b94",
+      "name": "Daily Summary Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [0, 300]
+    },
+    {
+      "parameters": {
+        "documentId": "YOUR_GOOGLE_SHEET_ID",
+        "sheetName": "Email Log",
+        "options": {}
+      },
+      "id": "376872cd-2b6a-4904-b01c-a39f7941e30c",
+      "name": "Read Email Log",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [224, 300],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "HNB3Dw6W9CONXlfX",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Generate daily email summary\nconst today = new Date().toISOString().split('T')[0];\nconst allEmails = $input.all().map(i => i.json);\n\nconst todaysEmails = allEmails.filter(email => {\n  const emailDate = (email.Date || '').split('T')[0];\n  return emailDate === today;\n});\n\nconst categoryCounts = {};\nlet urgentCount = 0;\nlet autoReplied = 0;\n\nfor (const email of todaysEmails) {\n  const cat = email.Category || 'OTHER';\n  categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;\n  if (email.Priority === 'HIGH') urgentCount++;\n  if (email['Auto Reply Sent'] === 'Yes') autoReplied++;\n}\n\nlet summaryText = `Daily Email Summary - ${today}\\n\\n`;\nsummaryText += `Total Emails: ${todaysEmails.length}\\n`;\nsummaryText += `Urgent: ${urgentCount}\\n`;\nsummaryText += `Auto-Replied: ${autoReplied}\\n\\n`;\nsummaryText += `By Category:\\n`;\n\nfor (const [cat, count] of Object.entries(categoryCounts)) {\n  summaryText += `- ${cat}: ${count}\\n`;\n}\n\nreturn [{ json: { summaryText, date: today, total: todaysEmails.length } }];"
+      },
+      "id": "b8382b3e-08ae-4353-bf48-4034ae767105",
+      "name": "Generate Email Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [448, 300]
+    },
+    {
+      "parameters": {
+        "sendTo": "cfeingold@results-learning.com",
+        "subject": "=Daily Email Summary - {{ $json.date }}",
+        "message": "={{ $json.summaryText }}",
+        "options": {}
+      },
+      "id": "email-summary-node-001",
+      "name": "Email Daily Summary",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [672, 300],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "9MiEWTcEqXxZwwVC",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Extract Email Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Email Data": {
+      "main": [
+        [
+          {
+            "node": "AI Categorize Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Categorize Email": {
+      "main": [
+        [
+          {
+            "node": "Merge Categorization",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Categorization": {
+      "main": [
+        [
+          {
+            "node": "Is Urgent?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Urgent?": {
+      "main": [
+        [
+          {
+            "node": "Send Urgent Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Auto-Reply Eligible?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Urgent Alert": {
+      "main": [
+        [
+          {
+            "node": "Log Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Auto-Reply Eligible?": {
+      "main": [
+        [
+          {
+            "node": "Generate Auto Reply",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Auto Reply": {
+      "main": [
+        [
+          {
+            "node": "Send Auto Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Auto Reply": {
+      "main": [
+        [
+          {
+            "node": "Log Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily Summary Trigger": {
+      "main": [
+        [
+          {
+            "node": "Read Email Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Email Log": {
+      "main": [
+        [
+          {
+            "node": "Generate Email Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Email Summary": {
+      "main": [
+        [
+          {
+            "node": "Email Daily Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "86a2703c75eeefe6ab99d63c5bd829547bc64792ad6510874dbb0f99e11caaaa"
+  },
+  "tags": []
+}

@@ -1,0 +1,250 @@
+{
+  "name": "Student Attendance Tracking & Alert System",
+  "description": "Automated workflow that collects daily attendance, identifies patterns, flags at-risk students, and sends alerts to appropriate staff",
+  "trigger": "Scheduled daily at 3:00 PM OR Manual trigger",
+  "platform": "n8n",
+
+  "workflow_steps": [
+    {
+      "step": 1,
+      "node_type": "Schedule Trigger",
+      "name": "Daily 3PM Trigger",
+      "config": {
+        "cron": "0 15 * * 1-5",
+        "timezone": "America/New_York"
+      },
+      "description": "Triggers every weekday at 3:00 PM to process attendance data"
+    },
+    {
+      "step": 2,
+      "node_type": "Google Sheets",
+      "name": "Fetch Today's Attendance",
+      "config": {
+        "operation": "Read",
+        "spreadsheet_id": "YOUR_ATTENDANCE_SHEET_ID",
+        "sheet_name": "Daily Attendance",
+        "range": "A:F",
+        "date_filter": "TODAY"
+      },
+      "description": "Reads attendance data from Google Sheets for today's date"
+    },
+    {
+      "step": 3,
+      "node_type": "Function",
+      "name": "Parse & Categorize Attendance",
+      "code": "// Process each student's attendance record\nconst items = $input.all();\nconst processed = [];\n\nfor (const item of items) {\n  const student = {\n    student_id: item.json.student_id,\n    name: item.json.name,\n    date: item.json.date,\n    status: item.json.status, // Present, Absent, Tardy\n    reason: item.json.reason || '',\n    grade: item.json.grade\n  };\n  \n  // Flag based on status\n  if (student.status === 'Absent') {\n    student.flag = 'ABSENT';\n    student.severity = 'high';\n  } else if (student.status === 'Tardy') {\n    student.flag = 'TARDY';\n    student.severity = 'medium';\n  } else {\n    student.flag = 'PRESENT';\n    student.severity = 'none';\n  }\n  \n  processed.push({ json: student });\n}\n\nreturn processed;",
+      "description": "Categorizes attendance records and assigns severity levels"
+    },
+    {
+      "step": 4,
+      "node_type": "Google Sheets",
+      "name": "Fetch Student Historical Data",
+      "config": {
+        "operation": "Lookup",
+        "spreadsheet_id": "YOUR_ATTENDANCE_SHEET_ID",
+        "sheet_name": "Attendance History",
+        "lookup_column": "student_id",
+        "return_columns": "student_id, total_absences, total_tardies, last_30_days_absences"
+      },
+      "description": "Gets historical attendance data for pattern detection"
+    },
+    {
+      "step": 5,
+      "node_type": "Function",
+      "name": "Detect Patterns & Trigger Alerts",
+      "code": "// Combine today's data with historical data\nconst items = $input.all();\nconst alerts = [];\n\nfor (const item of items) {\n  const student = item.json;\n  const history = student.history || {};\n  \n  // Pattern detection rules\n  const rules = {\n    chronic_absence: history.total_absences >= 10,\n    recent_pattern: history.last_30_days_absences >= 3,\n    consecutive_absences: student.consecutive_count >= 2,\n    chronic_tardiness: history.total_tardies >= 15\n  };\n  \n  // Create alerts for flagged students\n  if (student.flag === 'ABSENT' || student.flag === 'TARDY') {\n    const alert = {\n      student_id: student.student_id,\n      student_name: student.name,\n      date: student.date,\n      status: student.status,\n      total_absences: history.total_absences + (student.status === 'Absent' ? 1 : 0),\n      total_tardies: history.total_tardies + (student.status === 'Tardy' ? 1 : 0),\n      recent_absences: history.last_30_days_absences,\n      triggered_rules: [],\n      alert_level: 'low'\n    };\n    \n    // Check which rules are triggered\n    if (rules.chronic_absence) {\n      alert.triggered_rules.push('Chronic Absence (10+ total)');\n      alert.alert_level = 'high';\n    }\n    if (rules.recent_pattern) {\n      alert.triggered_rules.push('Recent Pattern (3+ in 30 days)');\n      alert.alert_level = alert.alert_level === 'high' ? 'high' : 'medium';\n    }\n    if (rules.consecutive_absences) {\n      alert.triggered_rules.push('Consecutive Absences');\n      alert.alert_level = 'high';\n    }\n    if (rules.chronic_tardiness) {\n      alert.triggered_rules.push('Chronic Tardiness (15+ total)');\n    }\n    \n    if (alert.triggered_rules.length > 0) {\n      alerts.push({ json: alert });\n    }\n  }\n}\n\nreturn alerts;",
+      "description": "Applies pattern detection rules and creates alerts for at-risk students"
+    },
+    {
+      "step": 6,
+      "node_type": "IF",
+      "name": "Check If Alerts Exist",
+      "config": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.length}}",
+              "operation": "isNotEmpty"
+            }
+          ]
+        }
+      },
+      "description": "Only proceed if there are alerts to send"
+    },
+    {
+      "step": 7,
+      "node_type": "Airtable",
+      "name": "Log Alerts to Database",
+      "config": {
+        "operation": "Create",
+        "base_id": "YOUR_AIRTABLE_BASE_ID",
+        "table": "Attendance Alerts",
+        "fields": "student_id, student_name, date, status, total_absences, total_tardies, triggered_rules, alert_level, created_at"
+      },
+      "description": "Stores all alerts in Airtable for tracking and reporting"
+    },
+    {
+      "step": 8,
+      "node_type": "Function",
+      "name": "Group Alerts by Severity",
+      "code": "const items = $input.all();\n\nconst grouped = {\n  high: [],\n  medium: [],\n  low: []\n};\n\nfor (const item of items) {\n  const level = item.json.alert_level;\n  grouped[level].push(item.json);\n}\n\nreturn [\n  { json: { high_alerts: grouped.high, medium_alerts: grouped.medium, low_alerts: grouped.low } }\n];",
+      "description": "Groups alerts by severity for targeted notifications"
+    },
+    {
+      "step": 9,
+      "node_type": "Gmail",
+      "name": "Send Alert Email to Staff",
+      "config": {
+        "operation": "Send",
+        "to": "staff@resultslearning.com, counselor@resultslearning.com",
+        "subject": "Daily Attendance Alert - {{$now.format('MMM DD, YYYY')}}",
+        "html_body": "<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    .alert-high { background: #fee; border-left: 4px solid #c00; padding: 10px; margin: 10px 0; }\n    .alert-medium { background: #fff4e6; border-left: 4px solid #ff9800; padding: 10px; margin: 10px 0; }\n    .alert-low { background: #f0f0f0; border-left: 4px solid #666; padding: 10px; margin: 10px 0; }\n  </style>\n</head>\n<body>\n  <h2>Attendance Alert Summary - {{$now.format('MMMM DD, YYYY')}}</h2>\n  \n  {{#if $json.high_alerts.length}}\n  <h3 style=\"color: #c00;\">🚨 High Priority ({{$json.high_alerts.length}})</h3>\n  {{#each $json.high_alerts}}\n  <div class=\"alert-high\">\n    <strong>{{this.student_name}}</strong> (ID: {{this.student_id}})<br>\n    Status: {{this.status}}<br>\n    Total Absences: {{this.total_absences}} | Total Tardies: {{this.total_tardies}}<br>\n    <strong>Concerns:</strong> {{this.triggered_rules.join(', ')}}\n  </div>\n  {{/each}}\n  {{/if}}\n  \n  {{#if $json.medium_alerts.length}}\n  <h3 style=\"color: #ff9800;\">⚠️ Medium Priority ({{$json.medium_alerts.length}})</h3>\n  {{#each $json.medium_alerts}}\n  <div class=\"alert-medium\">\n    <strong>{{this.student_name}}</strong> (ID: {{this.student_id}})<br>\n    Status: {{this.status}}<br>\n    Total Absences: {{this.total_absences}} | Total Tardies: {{this.total_tardies}}<br>\n    <strong>Concerns:</strong> {{this.triggered_rules.join(', ')}}\n  </div>\n  {{/each}}\n  {{/if}}\n  \n  <p><a href=\"https://airtable.com/YOUR_BASE/YOUR_TABLE\">View Full Attendance Dashboard</a></p>\n</body>\n</html>",
+        "attachDataUrls": false
+      },
+      "description": "Sends formatted email with all attendance alerts to staff"
+    },
+    {
+      "step": 10,
+      "node_type": "Slack",
+      "name": "Send Slack Alert for High Priority",
+      "config": {
+        "operation": "Post Message",
+        "channel": "#student-alerts",
+        "text": "🚨 *High Priority Attendance Alerts* - {{$now.format('MMM DD')}}\n\n{{#each $json.high_alerts}}\n• *{{this.student_name}}* - {{this.status}}\n  Total: {{this.total_absences}} absences, {{this.total_tardies}} tardies\n  Concerns: {{this.triggered_rules.join(', ')}}\n{{/each}}\n\n<https://airtable.com/YOUR_BASE|View Dashboard>"
+      },
+      "conditions": {
+        "if": "{{$json.high_alerts.length > 0}}"
+      },
+      "description": "Immediate Slack notification for high priority cases only"
+    },
+    {
+      "step": 11,
+      "node_type": "Google Sheets",
+      "name": "Update Historical Records",
+      "config": {
+        "operation": "Update",
+        "spreadsheet_id": "YOUR_ATTENDANCE_SHEET_ID",
+        "sheet_name": "Attendance History",
+        "lookup_column": "student_id",
+        "fields_to_update": "total_absences, total_tardies, last_updated, last_30_days_absences"
+      },
+      "description": "Updates running totals and historical data for future pattern detection"
+    },
+    {
+      "step": 12,
+      "node_type": "HTTP Request",
+      "name": "Create Intervention Records (High Priority)",
+      "config": {
+        "method": "POST",
+        "url": "YOUR_INTERVENTION_API/create",
+        "authentication": "Header Auth",
+        "body_parameters": {
+          "student_id": "={{$json.student_id}}",
+          "type": "Attendance Concern",
+          "severity": "high",
+          "triggered_by": "Automated Attendance System",
+          "description": "Student flagged for: {{$json.triggered_rules.join(', ')}}",
+          "assign_to": "counselor@resultslearning.com",
+          "status": "pending"
+        }
+      },
+      "conditions": {
+        "if": "{{$json.alert_level === 'high'}}"
+      },
+      "description": "Automatically creates intervention records for high priority cases"
+    }
+  ],
+
+  "data_sources": {
+    "input": {
+      "source": "Google Sheets",
+      "sheet_structure": {
+        "name": "Daily Attendance",
+        "columns": [
+          "date (YYYY-MM-DD)",
+          "student_id (text)",
+          "name (text)",
+          "grade (text)",
+          "status (Present/Absent/Tardy)",
+          "reason (text, optional)"
+        ]
+      },
+      "sample_data": [
+        "2024-01-15, STU001, John Smith, 9th, Absent, Sick",
+        "2024-01-15, STU002, Jane Doe, 10th, Present, ",
+        "2024-01-15, STU003, Mike Johnson, 9th, Tardy, Bus delay"
+      ]
+    },
+    "output": {
+      "database": "Airtable",
+      "table_structure": {
+        "name": "Attendance Alerts",
+        "columns": [
+          "alert_id (auto)",
+          "date (date)",
+          "student_id (text)",
+          "student_name (text)",
+          "status (single select: Absent/Tardy)",
+          "total_absences (number)",
+          "total_tardies (number)",
+          "triggered_rules (multiple select)",
+          "alert_level (single select: high/medium/low)",
+          "created_at (datetime)",
+          "resolved (checkbox)",
+          "assigned_to (text)"
+        ]
+      }
+    }
+  },
+
+  "configuration_required": [
+    "Google Sheets connection with attendance data",
+    "Airtable base for alert storage",
+    "Gmail account for sending notifications",
+    "Slack workspace connection (optional)",
+    "Staff email addresses for notifications",
+    "Attendance thresholds (currently: 10 total absences, 3 in 30 days, 15 tardies)"
+  ],
+
+  "customization_options": {
+    "alert_thresholds": {
+      "chronic_absence_count": 10,
+      "recent_pattern_days": 30,
+      "recent_pattern_count": 3,
+      "consecutive_absence_trigger": 2,
+      "chronic_tardiness_count": 15
+    },
+    "notification_preferences": {
+      "email_enabled": true,
+      "slack_enabled": true,
+      "sms_enabled": false,
+      "notification_time": "3:00 PM",
+      "high_priority_immediate": true,
+      "daily_summary": true
+    },
+    "intervention_rules": {
+      "auto_create_for_high": true,
+      "auto_assign_counselor": true,
+      "require_manual_review": false
+    }
+  },
+
+  "expected_outcomes": {
+    "time_savings": "2 hours/day → 15 minutes/day (87% reduction)",
+    "benefits": [
+      "Real-time identification of at-risk students",
+      "Automated pattern detection across 30-day windows",
+      "Immediate staff notifications for intervention",
+      "Complete audit trail of all alerts and actions",
+      "Zero manual data compilation or analysis",
+      "Proactive intervention vs reactive response"
+    ],
+    "metrics_tracked": [
+      "Daily absence/tardy counts",
+      "30-day rolling averages",
+      "Alert frequency by student",
+      "Intervention creation rate",
+      "Staff response time to alerts"
+    ]
+  }
+}

@@ -1,0 +1,1052 @@
+{
+  "name": "Teachworks Integration Demo - Results Learning",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## FLOW 1: Daily Morning Lesson Schedule\n**Trigger:** Every day at 7:00 AM\n\n**What it does:**\n1. Fetches all scheduled lessons for today from Teachworks\n2. Parses and organizes lessons by teacher and service type\n3. Sends a morning briefing email with the day's schedule\n\n**Output:** Email with lesson count, breakdown by teacher, and lesson details"
+      },
+      "id": "tw-sticky-001",
+      "name": "Sticky Note - Flow 1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-200, -100]
+    },
+    {
+      "parameters": {
+        "content": "## FLOW 2: End of Day Completion Report\n**Trigger:** Every day at 8:00 PM\n\n**What it does:**\n1. Fetches all lessons from today (all statuses)\n2. Analyzes completion rates, cancellations, and no-shows\n3. Flags lessons missing teacher notes\n4. Sends summary report with attendance statistics\n\n**Alerts:** No-shows, missing lesson notes, low completion rates"
+      },
+      "id": "tw-sticky-002",
+      "name": "Sticky Note - Flow 2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-200, 150]
+    },
+    {
+      "parameters": {
+        "content": "## FLOW 3: Weekly Teacher Performance Report\n**Trigger:** Every Monday morning\n\n**What it does:**\n1. Fetches all active employees (teachers)\n2. Pulls all lessons from the previous week\n3. Calculates per-teacher metrics:\n   - Lessons completed vs scheduled\n   - Total teaching hours\n   - Note completion rate\n   - Student no-show count\n4. Sends weekly performance summary\n\n**Use case:** Track teacher productivity and identify top performers"
+      },
+      "id": "tw-sticky-003",
+      "name": "Sticky Note - Flow 3",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-200, 400]
+    },
+    {
+      "parameters": {
+        "content": "## FLOW 4: Inactive Student Detection\n**Trigger:** Every day at 9:00 AM\n\n**What it does:**\n1. Fetches all active students from Teachworks\n2. Checks lesson history for the past 14 days\n3. Identifies students with no recent lessons (7+ days)\n4. Only sends alert if inactive students are found\n\n**Use case:** Re-engage at-risk students before they churn"
+      },
+      "id": "tw-sticky-004",
+      "name": "Sticky Note - Flow 4",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-200, 700]
+    },
+    {
+      "parameters": {
+        "content": "## FLOW 5: Weekly Teacher Schedule Analysis\n**Trigger:** Every day at 6:00 AM\n\n**What it does:**\n1. Fetches all teachers and their availability\n2. Pulls the upcoming week's lesson schedule\n3. Analyzes for scheduling issues:\n   - **Conflicts:** Double-booked time slots\n   - **Overbooked:** Teachers with 8+ hours/day\n   - **Underutilized:** Teachers with <10 hours/week\n4. Sends alert if issues found, otherwise summary\n\n**Use case:** Proactively fix scheduling problems"
+      },
+      "id": "tw-sticky-005",
+      "name": "Sticky Note - Flow 5",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-200, 1000]
+    },
+    {
+      "parameters": {
+        "content": "## FLOW 6: Real-Time Availability Check (Webhook)\n**Trigger:** POST request to /webhook/schedule-lesson\n\n**What it does:**\n1. Receives a scheduling request via webhook\n2. Checks if the teacher is available at requested time\n3. Detects conflicts with existing lessons\n4. Suggests up to 3 alternative time slots\n5. Returns JSON response for integration\n\n**Example Request:**\n```json\n{\n  \"teacher_id\": 123,\n  \"student_name\": \"John Smith\",\n  \"date\": \"2024-01-15\",\n  \"start_time\": \"14:00\",\n  \"end_time\": \"15:00\"\n}\n```\n\n**Use case:** Build a booking form or integrate with other systems"
+      },
+      "id": "tw-sticky-006",
+      "name": "Sticky Note - Flow 6",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-200, 1450]
+    },
+    {
+      "parameters": {
+        "content": "## SETUP INSTRUCTIONS\n\n### 1. Create Teachworks API Credential\n- Go to Teachworks → Settings → API\n- Generate an API Token\n- In n8n: Create \"HTTP Header Auth\" credential\n  - Name: `Teachworks API`\n  - Header Name: `Authorization`\n  - Header Value: `Token YOUR_API_TOKEN`\n\n### 2. Update Credential IDs\n- Replace `YOUR_TEACHWORKS_CREDENTIAL_ID` in all HTTP nodes\n- Gmail credential is already configured\n\n### 3. Customize Settings\n- Update email addresses as needed\n- Adjust trigger times for your timezone\n- Modify thresholds (8h overbook, 10h underutil)"
+      },
+      "id": "tw-sticky-setup",
+      "name": "Sticky Note - Setup",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [900, -100]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 7
+            }
+          ]
+        }
+      },
+      "id": "tw-trigger-001",
+      "name": "Daily Morning Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.teachworks.com/v1/lessons",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "start_date",
+              "value": "={{ $now.format('yyyy-MM-dd') }}"
+            },
+            {
+              "name": "end_date",
+              "value": "={{ $now.format('yyyy-MM-dd') }}"
+            },
+            {
+              "name": "status",
+              "value": "scheduled"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "tw-get-lessons-001",
+      "name": "Get Today's Lessons",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [220, 0],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "YOUR_TEACHWORKS_CREDENTIAL_ID",
+          "name": "Teachworks API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse lessons and create summary\nconst response = $input.first().json;\nconst lessons = response.lessons || response.data || response || [];\n\nconst summary = {\n  totalLessons: lessons.length,\n  byEmployee: {},\n  byService: {},\n  lessonDetails: []\n};\n\nfor (const lesson of lessons) {\n  // Count by employee/teacher\n  const employeeName = lesson.employee_name || lesson.teacher_name || 'Unassigned';\n  summary.byEmployee[employeeName] = (summary.byEmployee[employeeName] || 0) + 1;\n  \n  // Count by service type\n  const serviceName = lesson.service_name || lesson.service || 'General';\n  summary.byService[serviceName] = (summary.byService[serviceName] || 0) + 1;\n  \n  // Store lesson details\n  summary.lessonDetails.push({\n    id: lesson.id,\n    student: lesson.student_name || lesson.student,\n    teacher: employeeName,\n    service: serviceName,\n    startTime: lesson.start_time || lesson.starts_at,\n    endTime: lesson.end_time || lesson.ends_at,\n    status: lesson.status,\n    location: lesson.location_name || lesson.location || 'TBD'\n  });\n}\n\n// Create formatted summary text\nlet summaryText = `📚 DAILY LESSON SCHEDULE - ${new Date().toLocaleDateString()}\\n\\n`;\nsummaryText += `Total Lessons Today: ${summary.totalLessons}\\n\\n`;\n\nsummaryText += `👨‍🏫 By Teacher:\\n`;\nfor (const [teacher, count] of Object.entries(summary.byEmployee)) {\n  summaryText += `  • ${teacher}: ${count} lesson(s)\\n`;\n}\n\nsummaryText += `\\n📖 By Service:\\n`;\nfor (const [service, count] of Object.entries(summary.byService)) {\n  summaryText += `  • ${service}: ${count} lesson(s)\\n`;\n}\n\nsummaryText += `\\n📋 Lesson Details:\\n`;\nfor (const lesson of summary.lessonDetails.slice(0, 10)) {\n  summaryText += `  • ${lesson.startTime} - ${lesson.student} with ${lesson.teacher} (${lesson.service})\\n`;\n}\n\nif (summary.lessonDetails.length > 10) {\n  summaryText += `  ... and ${summary.lessonDetails.length - 10} more lessons\\n`;\n}\n\nreturn [{ json: { ...summary, summaryText, date: new Date().toISOString().split('T')[0] } }];"
+      },
+      "id": "tw-parse-lessons-001",
+      "name": "Parse Lesson Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 0]
+    },
+    {
+      "parameters": {
+        "sendTo": "cfeingold@results-learning.com",
+        "subject": "=📚 Daily Lesson Schedule - {{ $json.date }}",
+        "message": "={{ $json.summaryText }}",
+        "options": {}
+      },
+      "id": "tw-email-schedule-001",
+      "name": "Email Daily Schedule",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [660, 0],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "9MiEWTcEqXxZwwVC",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 20
+            }
+          ]
+        }
+      },
+      "id": "tw-trigger-002",
+      "name": "Evening Report Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [0, 250]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.teachworks.com/v1/lessons",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "start_date",
+              "value": "={{ $now.format('yyyy-MM-dd') }}"
+            },
+            {
+              "name": "end_date",
+              "value": "={{ $now.format('yyyy-MM-dd') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "tw-get-lessons-002",
+      "name": "Get All Today's Lessons",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [220, 250],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "YOUR_TEACHWORKS_CREDENTIAL_ID",
+          "name": "Teachworks API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Analyze completed lessons and identify issues\nconst response = $input.first().json;\nconst lessons = response.lessons || response.data || response || [];\n\nconst analysis = {\n  total: lessons.length,\n  completed: 0,\n  cancelled: 0,\n  noShow: 0,\n  missingNotes: [],\n  completedLessons: [],\n  issues: []\n};\n\nfor (const lesson of lessons) {\n  const status = (lesson.status || '').toLowerCase();\n  \n  if (status === 'completed' || status === 'complete') {\n    analysis.completed++;\n    analysis.completedLessons.push(lesson);\n    \n    // Check for missing lesson notes\n    if (!lesson.notes && !lesson.lesson_notes) {\n      analysis.missingNotes.push({\n        id: lesson.id,\n        student: lesson.student_name || lesson.student,\n        teacher: lesson.employee_name || lesson.teacher_name,\n        time: lesson.start_time || lesson.starts_at\n      });\n    }\n  } else if (status === 'cancelled' || status === 'canceled') {\n    analysis.cancelled++;\n  } else if (status === 'no_show' || status === 'noshow' || status === 'no-show') {\n    analysis.noShow++;\n    analysis.issues.push({\n      type: 'NO_SHOW',\n      student: lesson.student_name || lesson.student,\n      teacher: lesson.employee_name || lesson.teacher_name,\n      time: lesson.start_time || lesson.starts_at\n    });\n  }\n}\n\n// Calculate completion rate\nconst scheduledTotal = analysis.total - analysis.cancelled;\nanalysis.completionRate = scheduledTotal > 0 \n  ? ((analysis.completed / scheduledTotal) * 100).toFixed(1) \n  : 0;\n\n// Create report\nlet report = `📊 END OF DAY LESSON REPORT - ${new Date().toLocaleDateString()}\\n\\n`;\nreport += `📈 Summary:\\n`;\nreport += `  • Total Scheduled: ${analysis.total}\\n`;\nreport += `  • Completed: ${analysis.completed}\\n`;\nreport += `  • Cancelled: ${analysis.cancelled}\\n`;\nreport += `  • No-Shows: ${analysis.noShow}\\n`;\nreport += `  • Completion Rate: ${analysis.completionRate}%\\n\\n`;\n\nif (analysis.missingNotes.length > 0) {\n  report += `⚠️ MISSING LESSON NOTES (${analysis.missingNotes.length}):\\n`;\n  for (const lesson of analysis.missingNotes.slice(0, 5)) {\n    report += `  • ${lesson.student} with ${lesson.teacher} at ${lesson.time}\\n`;\n  }\n  if (analysis.missingNotes.length > 5) {\n    report += `  ... and ${analysis.missingNotes.length - 5} more\\n`;\n  }\n  report += `\\n`;\n}\n\nif (analysis.noShow > 0) {\n  report += `🚨 NO-SHOWS TODAY:\\n`;\n  for (const issue of analysis.issues.filter(i => i.type === 'NO_SHOW')) {\n    report += `  • ${issue.student} missed lesson with ${issue.teacher}\\n`;\n  }\n}\n\nreturn [{ json: { ...analysis, report, date: new Date().toISOString().split('T')[0] } }];"
+      },
+      "id": "tw-analyze-lessons-001",
+      "name": "Analyze Lesson Completion",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 250]
+    },
+    {
+      "parameters": {
+        "sendTo": "cfeingold@results-learning.com",
+        "subject": "=📊 End of Day Report - {{ $json.completionRate }}% Completion - {{ $json.date }}",
+        "message": "={{ $json.report }}",
+        "options": {}
+      },
+      "id": "tw-email-report-001",
+      "name": "Email End of Day Report",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [660, 250],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "9MiEWTcEqXxZwwVC",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtDay": 1
+            }
+          ]
+        }
+      },
+      "id": "tw-trigger-003",
+      "name": "Weekly Monday Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [0, 500]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.teachworks.com/v1/employees",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "status",
+              "value": "active"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "tw-get-employees-001",
+      "name": "Get Active Employees",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [220, 500],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "YOUR_TEACHWORKS_CREDENTIAL_ID",
+          "name": "Teachworks API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.teachworks.com/v1/lessons",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "start_date",
+              "value": "={{ $now.minus({days: 7}).format('yyyy-MM-dd') }}"
+            },
+            {
+              "name": "end_date",
+              "value": "={{ $now.minus({days: 1}).format('yyyy-MM-dd') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "tw-get-week-lessons-001",
+      "name": "Get Last Week Lessons",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [220, 650],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "YOUR_TEACHWORKS_CREDENTIAL_ID",
+          "name": "Teachworks API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Generate weekly employee performance report\nconst employeesData = $('Get Active Employees').first().json;\nconst lessonsData = $('Get Last Week Lessons').first().json;\n\nconst employees = employeesData.employees || employeesData.data || employeesData || [];\nconst lessons = lessonsData.lessons || lessonsData.data || lessonsData || [];\n\n// Build performance metrics per employee\nconst performance = {};\n\nfor (const lesson of lessons) {\n  const employeeId = lesson.employee_id || lesson.teacher_id;\n  const employeeName = lesson.employee_name || lesson.teacher_name || `Employee ${employeeId}`;\n  \n  if (!performance[employeeName]) {\n    performance[employeeName] = {\n      name: employeeName,\n      totalLessons: 0,\n      completed: 0,\n      cancelled: 0,\n      noShows: 0,\n      totalHours: 0,\n      withNotes: 0\n    };\n  }\n  \n  performance[employeeName].totalLessons++;\n  \n  const status = (lesson.status || '').toLowerCase();\n  if (status === 'completed' || status === 'complete') {\n    performance[employeeName].completed++;\n    if (lesson.notes || lesson.lesson_notes) {\n      performance[employeeName].withNotes++;\n    }\n  } else if (status === 'cancelled' || status === 'canceled') {\n    performance[employeeName].cancelled++;\n  } else if (status.includes('no') && status.includes('show')) {\n    performance[employeeName].noShows++;\n  }\n  \n  // Calculate hours\n  if (lesson.duration_minutes) {\n    performance[employeeName].totalHours += lesson.duration_minutes / 60;\n  } else if (lesson.duration) {\n    performance[employeeName].totalHours += parseFloat(lesson.duration) || 0;\n  }\n}\n\n// Generate report\nlet report = `📈 WEEKLY TEACHER PERFORMANCE REPORT\\n`;\nreport += `Week of ${$now.minus({days: 7}).format('MMM dd')} - ${$now.minus({days: 1}).format('MMM dd, yyyy')}\\n\\n`;\n\nconst sortedPerformance = Object.values(performance).sort((a, b) => b.completed - a.completed);\n\nreport += `👨‍🏫 TEACHER SUMMARY:\\n`;\nreport += `${'─'.repeat(50)}\\n`;\n\nfor (const teacher of sortedPerformance) {\n  const completionRate = teacher.totalLessons > 0 \n    ? ((teacher.completed / (teacher.totalLessons - teacher.cancelled)) * 100).toFixed(0)\n    : 0;\n  const notesRate = teacher.completed > 0\n    ? ((teacher.withNotes / teacher.completed) * 100).toFixed(0)\n    : 0;\n    \n  report += `\\n${teacher.name}:\\n`;\n  report += `  📊 Lessons: ${teacher.completed}/${teacher.totalLessons - teacher.cancelled} completed (${completionRate}%)\\n`;\n  report += `  ⏱️ Hours: ${teacher.totalHours.toFixed(1)}\\n`;\n  report += `  📝 Notes: ${notesRate}% complete\\n`;\n  if (teacher.noShows > 0) {\n    report += `  ⚠️ Student No-Shows: ${teacher.noShows}\\n`;\n  }\n}\n\n// Overall stats\nconst totalCompleted = sortedPerformance.reduce((sum, t) => sum + t.completed, 0);\nconst totalLessons = sortedPerformance.reduce((sum, t) => sum + t.totalLessons, 0);\nconst totalHours = sortedPerformance.reduce((sum, t) => sum + t.totalHours, 0);\n\nreport += `\\n${'─'.repeat(50)}\\n`;\nreport += `📊 OVERALL STATS:\\n`;\nreport += `  • Total Lessons Completed: ${totalCompleted}\\n`;\nreport += `  • Total Teaching Hours: ${totalHours.toFixed(1)}\\n`;\nreport += `  • Active Teachers: ${sortedPerformance.length}\\n`;\n\nreturn [{ json: { performance: sortedPerformance, report, weekStart: $now.minus({days: 7}).format('yyyy-MM-dd') } }];"
+      },
+      "id": "tw-weekly-analysis-001",
+      "name": "Generate Weekly Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 575]
+    },
+    {
+      "parameters": {
+        "sendTo": "cfeingold@results-learning.com",
+        "subject": "=📈 Weekly Teacher Performance Report - {{ $json.weekStart }}",
+        "message": "={{ $json.report }}",
+        "options": {}
+      },
+      "id": "tw-email-weekly-001",
+      "name": "Email Weekly Report",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [660, 575],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "9MiEWTcEqXxZwwVC",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "id": "tw-trigger-004",
+      "name": "Student Check Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [0, 800]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.teachworks.com/v1/students",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "status",
+              "value": "active"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "tw-get-students-001",
+      "name": "Get Active Students",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [220, 800],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "YOUR_TEACHWORKS_CREDENTIAL_ID",
+          "name": "Teachworks API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.teachworks.com/v1/lessons",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "start_date",
+              "value": "={{ $now.minus({days: 14}).format('yyyy-MM-dd') }}"
+            },
+            {
+              "name": "end_date",
+              "value": "={{ $now.format('yyyy-MM-dd') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "tw-get-recent-lessons-001",
+      "name": "Get Recent Lessons",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [220, 950],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "YOUR_TEACHWORKS_CREDENTIAL_ID",
+          "name": "Teachworks API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Identify students who haven't had lessons recently\nconst studentsData = $('Get Active Students').first().json;\nconst lessonsData = $('Get Recent Lessons').first().json;\n\nconst students = studentsData.students || studentsData.data || studentsData || [];\nconst lessons = lessonsData.lessons || lessonsData.data || lessonsData || [];\n\n// Track last lesson per student\nconst lastLesson = {};\nfor (const lesson of lessons) {\n  const studentId = lesson.student_id;\n  const lessonDate = new Date(lesson.start_time || lesson.starts_at || lesson.date);\n  \n  if (!lastLesson[studentId] || lessonDate > lastLesson[studentId].date) {\n    lastLesson[studentId] = {\n      date: lessonDate,\n      status: lesson.status\n    };\n  }\n}\n\n// Find students with no recent lessons\nconst inactiveStudents = [];\nconst oneWeekAgo = new Date();\noneWeekAgo.setDate(oneWeekAgo.getDate() - 7);\n\nfor (const student of students) {\n  const studentId = student.id;\n  const studentName = student.name || `${student.first_name} ${student.last_name}`;\n  \n  if (!lastLesson[studentId]) {\n    inactiveStudents.push({\n      name: studentName,\n      email: student.email || student.parent_email,\n      phone: student.phone || student.parent_phone,\n      lastLesson: 'No lessons in past 14 days',\n      daysInactive: 14\n    });\n  } else if (lastLesson[studentId].date < oneWeekAgo) {\n    const daysSince = Math.floor((new Date() - lastLesson[studentId].date) / (1000 * 60 * 60 * 24));\n    inactiveStudents.push({\n      name: studentName,\n      email: student.email || student.parent_email,\n      phone: student.phone || student.parent_phone,\n      lastLesson: lastLesson[studentId].date.toLocaleDateString(),\n      daysInactive: daysSince\n    });\n  }\n}\n\n// Sort by days inactive\ninactiveStudents.sort((a, b) => b.daysInactive - a.daysInactive);\n\nif (inactiveStudents.length === 0) {\n  return [{ json: { hasInactive: false, message: 'All students are active!' } }];\n}\n\nlet alert = `⚠️ INACTIVE STUDENT ALERT\\n\\n`;\nalert += `Found ${inactiveStudents.length} students without recent lessons:\\n\\n`;\n\nfor (const student of inactiveStudents.slice(0, 10)) {\n  alert += `• ${student.name}\\n`;\n  alert += `  Last Lesson: ${student.lastLesson}\\n`;\n  alert += `  Days Inactive: ${student.daysInactive}\\n`;\n  if (student.email) alert += `  Email: ${student.email}\\n`;\n  alert += `\\n`;\n}\n\nif (inactiveStudents.length > 10) {\n  alert += `... and ${inactiveStudents.length - 10} more inactive students\\n`;\n}\n\nalert += `\\nConsider reaching out to re-engage these students!`;\n\nreturn [{ json: { hasInactive: true, count: inactiveStudents.length, students: inactiveStudents, alert } }];"
+      },
+      "id": "tw-check-inactive-001",
+      "name": "Check Inactive Students",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 875]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.hasInactive }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "tw-check-has-inactive-001",
+      "name": "Has Inactive Students?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [660, 875]
+    },
+    {
+      "parameters": {
+        "sendTo": "cfeingold@results-learning.com",
+        "subject": "=⚠️ {{ $json.count }} Inactive Students Need Attention",
+        "message": "={{ $json.alert }}",
+        "options": {}
+      },
+      "id": "tw-email-inactive-001",
+      "name": "Email Inactive Alert",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [880, 800],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "9MiEWTcEqXxZwwVC",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 6
+            }
+          ]
+        }
+      },
+      "id": "tw-trigger-005",
+      "name": "Teacher Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [0, 1100]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.teachworks.com/v1/employees",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "status",
+              "value": "active"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "tw-get-teachers-sched-001",
+      "name": "Get All Teachers",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [220, 1100],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "YOUR_TEACHWORKS_CREDENTIAL_ID",
+          "name": "Teachworks API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.teachworks.com/v1/lessons",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "start_date",
+              "value": "={{ $now.format('yyyy-MM-dd') }}"
+            },
+            {
+              "name": "end_date",
+              "value": "={{ $now.plus({days: 7}).format('yyyy-MM-dd') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "tw-get-week-schedule-001",
+      "name": "Get Week Schedule",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [220, 1250],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "YOUR_TEACHWORKS_CREDENTIAL_ID",
+          "name": "Teachworks API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.teachworks.com/v1/availabilities",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "start_date",
+              "value": "={{ $now.format('yyyy-MM-dd') }}"
+            },
+            {
+              "name": "end_date",
+              "value": "={{ $now.plus({days: 7}).format('yyyy-MM-dd') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "tw-get-availability-001",
+      "name": "Get Teacher Availability",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [220, 1400],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "YOUR_TEACHWORKS_CREDENTIAL_ID",
+          "name": "Teachworks API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Analyze teacher schedules and detect issues\nconst teachersData = $('Get All Teachers').first().json;\nconst lessonsData = $('Get Week Schedule').first().json;\nconst availabilityData = $('Get Teacher Availability').first().json;\n\nconst teachers = teachersData.employees || teachersData.data || teachersData || [];\nconst lessons = lessonsData.lessons || lessonsData.data || lessonsData || [];\nconst availability = availabilityData.availabilities || availabilityData.data || availabilityData || [];\n\n// Build teacher schedule map\nconst teacherSchedules = {};\nconst conflicts = [];\nconst overbooked = [];\nconst underutilized = [];\n\n// Initialize teacher data\nfor (const teacher of teachers) {\n  const id = teacher.id;\n  const name = teacher.name || `${teacher.first_name} ${teacher.last_name}`;\n  teacherSchedules[id] = {\n    id,\n    name,\n    email: teacher.email,\n    lessons: [],\n    totalHours: 0,\n    dailyBreakdown: {},\n    availability: []\n  };\n}\n\n// Map availability\nfor (const avail of availability) {\n  const teacherId = avail.employee_id;\n  if (teacherSchedules[teacherId]) {\n    teacherSchedules[teacherId].availability.push({\n      day: avail.day_of_week || avail.weekday,\n      start: avail.start_time,\n      end: avail.end_time\n    });\n  }\n}\n\n// Process lessons and detect conflicts\nfor (const lesson of lessons) {\n  const teacherId = lesson.employee_id || lesson.teacher_id;\n  if (!teacherSchedules[teacherId]) continue;\n  \n  const lessonStart = new Date(lesson.start_time || lesson.starts_at);\n  const lessonEnd = new Date(lesson.end_time || lesson.ends_at);\n  const dateKey = lessonStart.toISOString().split('T')[0];\n  \n  const lessonInfo = {\n    id: lesson.id,\n    student: lesson.student_name || lesson.student,\n    service: lesson.service_name || lesson.service,\n    start: lessonStart,\n    end: lessonEnd,\n    duration: (lessonEnd - lessonStart) / (1000 * 60 * 60) // hours\n  };\n  \n  // Check for overlapping lessons (conflicts)\n  for (const existing of teacherSchedules[teacherId].lessons) {\n    if (lessonStart < existing.end && lessonEnd > existing.start) {\n      conflicts.push({\n        teacher: teacherSchedules[teacherId].name,\n        lesson1: `${existing.student} at ${existing.start.toLocaleTimeString()}`,\n        lesson2: `${lessonInfo.student} at ${lessonInfo.start.toLocaleTimeString()}`,\n        date: dateKey\n      });\n    }\n  }\n  \n  teacherSchedules[teacherId].lessons.push(lessonInfo);\n  teacherSchedules[teacherId].totalHours += lessonInfo.duration;\n  \n  // Daily breakdown\n  if (!teacherSchedules[teacherId].dailyBreakdown[dateKey]) {\n    teacherSchedules[teacherId].dailyBreakdown[dateKey] = { count: 0, hours: 0 };\n  }\n  teacherSchedules[teacherId].dailyBreakdown[dateKey].count++;\n  teacherSchedules[teacherId].dailyBreakdown[dateKey].hours += lessonInfo.duration;\n}\n\n// Analyze workload\nconst OVERBOOK_THRESHOLD = 8; // hours per day\nconst UNDERUTIL_THRESHOLD = 10; // hours per week\n\nfor (const [id, teacher] of Object.entries(teacherSchedules)) {\n  // Check for overbooked days\n  for (const [date, day] of Object.entries(teacher.dailyBreakdown)) {\n    if (day.hours > OVERBOOK_THRESHOLD) {\n      overbooked.push({\n        teacher: teacher.name,\n        date,\n        hours: day.hours.toFixed(1),\n        lessons: day.count\n      });\n    }\n  }\n  \n  // Check for underutilized teachers\n  if (teacher.totalHours < UNDERUTIL_THRESHOLD && teacher.totalHours > 0) {\n    underutilized.push({\n      teacher: teacher.name,\n      weeklyHours: teacher.totalHours.toFixed(1),\n      lessonsCount: teacher.lessons.length\n    });\n  }\n}\n\n// Generate report\nlet report = `📅 WEEKLY TEACHER SCHEDULING REPORT\\n`;\nreport += `Week of ${$now.format('MMM dd')} - ${$now.plus({days: 7}).format('MMM dd, yyyy')}\\n\\n`;\n\n// Schedule Overview\nreport += `👨‍🏫 TEACHER SCHEDULES:\\n`;\nreport += `${'─'.repeat(50)}\\n`;\n\nconst sortedTeachers = Object.values(teacherSchedules)\n  .filter(t => t.lessons.length > 0)\n  .sort((a, b) => b.totalHours - a.totalHours);\n\nfor (const teacher of sortedTeachers) {\n  report += `\\n${teacher.name}:\\n`;\n  report += `  📊 Weekly Total: ${teacher.totalHours.toFixed(1)} hours (${teacher.lessons.length} lessons)\\n`;\n  \n  const days = Object.entries(teacher.dailyBreakdown).sort((a, b) => a[0].localeCompare(b[0]));\n  for (const [date, day] of days) {\n    const dayName = new Date(date).toLocaleDateString('en-US', { weekday: 'short' });\n    report += `    ${dayName} (${date}): ${day.count} lessons, ${day.hours.toFixed(1)}h\\n`;\n  }\n}\n\n// Conflicts\nif (conflicts.length > 0) {\n  report += `\\n🚨 SCHEDULING CONFLICTS DETECTED (${conflicts.length}):\\n`;\n  report += `${'─'.repeat(50)}\\n`;\n  for (const conflict of conflicts) {\n    report += `  ⚠️ ${conflict.teacher} on ${conflict.date}:\\n`;\n    report += `     → ${conflict.lesson1}\\n`;\n    report += `     → ${conflict.lesson2}\\n`;\n  }\n}\n\n// Overbooked\nif (overbooked.length > 0) {\n  report += `\\n⚠️ OVERBOOKED DAYS (>${OVERBOOK_THRESHOLD}h):\\n`;\n  report += `${'─'.repeat(50)}\\n`;\n  for (const ob of overbooked) {\n    report += `  • ${ob.teacher} on ${ob.date}: ${ob.hours}h (${ob.lessons} lessons)\\n`;\n  }\n}\n\n// Underutilized\nif (underutilized.length > 0) {\n  report += `\\n📉 UNDERUTILIZED TEACHERS (<${UNDERUTIL_THRESHOLD}h/week):\\n`;\n  report += `${'─'.repeat(50)}\\n`;\n  for (const ut of underutilized) {\n    report += `  • ${ut.teacher}: ${ut.weeklyHours}h (${ut.lessonsCount} lessons)\\n`;\n  }\n  report += `  Consider assigning more lessons to these teachers.\\n`;\n}\n\n// Summary stats\nconst totalLessons = sortedTeachers.reduce((sum, t) => sum + t.lessons.length, 0);\nconst totalHours = sortedTeachers.reduce((sum, t) => sum + t.totalHours, 0);\n\nreport += `\\n${'─'.repeat(50)}\\n`;\nreport += `📊 WEEK SUMMARY:\\n`;\nreport += `  • Total Scheduled Lessons: ${totalLessons}\\n`;\nreport += `  • Total Teaching Hours: ${totalHours.toFixed(1)}\\n`;\nreport += `  • Active Teachers: ${sortedTeachers.length}\\n`;\nreport += `  • Scheduling Conflicts: ${conflicts.length}\\n`;\nreport += `  • Overbooked Days: ${overbooked.length}\\n`;\n\nreturn [{ \n  json: { \n    report, \n    conflicts, \n    overbooked, \n    underutilized,\n    hasIssues: conflicts.length > 0 || overbooked.length > 0,\n    teacherCount: sortedTeachers.length,\n    totalLessons,\n    totalHours: totalHours.toFixed(1)\n  } \n}];"
+      },
+      "id": "tw-analyze-schedule-001",
+      "name": "Analyze Teacher Schedules",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [500, 1250]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.hasIssues }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "tw-check-issues-001",
+      "name": "Has Scheduling Issues?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [720, 1250]
+    },
+    {
+      "parameters": {
+        "sendTo": "cfeingold@results-learning.com",
+        "subject": "=🚨 Teacher Scheduling Issues Detected - {{ $json.conflicts.length }} Conflicts",
+        "message": "={{ $json.report }}",
+        "options": {}
+      },
+      "id": "tw-email-conflicts-001",
+      "name": "Email Scheduling Alert",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [940, 1150],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "9MiEWTcEqXxZwwVC",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "cfeingold@results-learning.com",
+        "subject": "=📅 Weekly Teacher Schedule Summary - {{ $json.totalLessons }} Lessons",
+        "message": "={{ $json.report }}",
+        "options": {}
+      },
+      "id": "tw-email-schedule-summary-001",
+      "name": "Email Schedule Summary",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [940, 1350],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "9MiEWTcEqXxZwwVC",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "schedule-lesson",
+        "options": {}
+      },
+      "id": "tw-webhook-schedule-001",
+      "name": "New Lesson Request Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [0, 1550],
+      "webhookId": "schedule-lesson-webhook"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.teachworks.com/v1/employees/{{ $json.body.teacher_id || $json.body.employee_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "tw-get-teacher-details-001",
+      "name": "Get Teacher Details",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [220, 1550],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "YOUR_TEACHWORKS_CREDENTIAL_ID",
+          "name": "Teachworks API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.teachworks.com/v1/lessons",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "employee_id",
+              "value": "={{ $('New Lesson Request Webhook').first().json.body.teacher_id }}"
+            },
+            {
+              "name": "start_date",
+              "value": "={{ $('New Lesson Request Webhook').first().json.body.date }}"
+            },
+            {
+              "name": "end_date",
+              "value": "={{ $('New Lesson Request Webhook').first().json.body.date }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "tw-get-teacher-day-001",
+      "name": "Get Teacher Day Schedule",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [220, 1700],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "YOUR_TEACHWORKS_CREDENTIAL_ID",
+          "name": "Teachworks API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Check if requested time slot is available\nconst request = $('New Lesson Request Webhook').first().json.body;\nconst teacherData = $('Get Teacher Details').first().json;\nconst existingLessons = $('Get Teacher Day Schedule').first().json;\n\nconst lessons = existingLessons.lessons || existingLessons.data || existingLessons || [];\nconst teacher = teacherData.employee || teacherData;\n\nconst requestedStart = new Date(`${request.date}T${request.start_time}`);\nconst requestedEnd = new Date(`${request.date}T${request.end_time}`);\nconst requestedDuration = (requestedEnd - requestedStart) / (1000 * 60); // minutes\n\n// Check for conflicts\nconst conflicts = [];\nfor (const lesson of lessons) {\n  const lessonStart = new Date(lesson.start_time || lesson.starts_at);\n  const lessonEnd = new Date(lesson.end_time || lesson.ends_at);\n  \n  if (requestedStart < lessonEnd && requestedEnd > lessonStart) {\n    conflicts.push({\n      student: lesson.student_name || lesson.student,\n      time: `${lessonStart.toLocaleTimeString()} - ${lessonEnd.toLocaleTimeString()}`\n    });\n  }\n}\n\nconst isAvailable = conflicts.length === 0;\n\n// Find alternative slots if not available\nconst alternatives = [];\nif (!isAvailable) {\n  // Sort existing lessons by start time\n  const sortedLessons = lessons\n    .map(l => ({\n      start: new Date(l.start_time || l.starts_at),\n      end: new Date(l.end_time || l.ends_at)\n    }))\n    .sort((a, b) => a.start - b.start);\n  \n  // Check gaps between lessons\n  const dayStart = new Date(`${request.date}T08:00:00`);\n  const dayEnd = new Date(`${request.date}T20:00:00`);\n  \n  let checkTime = dayStart;\n  for (const lesson of sortedLessons) {\n    const gap = (lesson.start - checkTime) / (1000 * 60); // minutes\n    if (gap >= requestedDuration) {\n      alternatives.push({\n        start: checkTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),\n        end: new Date(checkTime.getTime() + requestedDuration * 60000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })\n      });\n    }\n    checkTime = lesson.end;\n  }\n  \n  // Check after last lesson\n  const finalGap = (dayEnd - checkTime) / (1000 * 60);\n  if (finalGap >= requestedDuration) {\n    alternatives.push({\n      start: checkTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),\n      end: new Date(checkTime.getTime() + requestedDuration * 60000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })\n    });\n  }\n}\n\nconst teacherName = teacher.name || `${teacher.first_name} ${teacher.last_name}`;\n\nreturn [{\n  json: {\n    isAvailable,\n    teacher: teacherName,\n    teacherEmail: teacher.email,\n    requestedDate: request.date,\n    requestedTime: `${request.start_time} - ${request.end_time}`,\n    studentName: request.student_name,\n    conflicts,\n    alternatives: alternatives.slice(0, 3),\n    message: isAvailable \n      ? `✅ Time slot is available! ${teacherName} can teach ${request.student_name} on ${request.date} from ${request.start_time} to ${request.end_time}.`\n      : `❌ Time slot conflict! ${teacherName} has ${conflicts.length} overlapping lesson(s). ${alternatives.length > 0 ? 'Alternative slots available.' : 'No alternatives found for this day.'}`\n  }\n}];"
+      },
+      "id": "tw-check-availability-001",
+      "name": "Check Time Slot Availability",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [500, 1625]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "tw-respond-availability-001",
+      "name": "Respond with Availability",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [720, 1625]
+    }
+  ],
+  "connections": {
+    "Daily Morning Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Today's Lessons",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Today's Lessons": {
+      "main": [
+        [
+          {
+            "node": "Parse Lesson Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Lesson Data": {
+      "main": [
+        [
+          {
+            "node": "Email Daily Schedule",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evening Report Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get All Today's Lessons",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Today's Lessons": {
+      "main": [
+        [
+          {
+            "node": "Analyze Lesson Completion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze Lesson Completion": {
+      "main": [
+        [
+          {
+            "node": "Email End of Day Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Weekly Monday Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Active Employees",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Last Week Lessons",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Active Employees": {
+      "main": [
+        [
+          {
+            "node": "Generate Weekly Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Last Week Lessons": {
+      "main": [
+        [
+          {
+            "node": "Generate Weekly Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Weekly Report": {
+      "main": [
+        [
+          {
+            "node": "Email Weekly Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Student Check Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Active Students",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Recent Lessons",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Active Students": {
+      "main": [
+        [
+          {
+            "node": "Check Inactive Students",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Recent Lessons": {
+      "main": [
+        [
+          {
+            "node": "Check Inactive Students",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Inactive Students": {
+      "main": [
+        [
+          {
+            "node": "Has Inactive Students?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Inactive Students?": {
+      "main": [
+        [
+          {
+            "node": "Email Inactive Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Teacher Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get All Teachers",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Week Schedule",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Teacher Availability",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Teachers": {
+      "main": [
+        [
+          {
+            "node": "Analyze Teacher Schedules",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Week Schedule": {
+      "main": [
+        [
+          {
+            "node": "Analyze Teacher Schedules",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Teacher Availability": {
+      "main": [
+        [
+          {
+            "node": "Analyze Teacher Schedules",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze Teacher Schedules": {
+      "main": [
+        [
+          {
+            "node": "Has Scheduling Issues?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Scheduling Issues?": {
+      "main": [
+        [
+          {
+            "node": "Email Scheduling Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Email Schedule Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "New Lesson Request Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get Teacher Details",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Teacher Day Schedule",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Teacher Details": {
+      "main": [
+        [
+          {
+            "node": "Check Time Slot Availability",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Teacher Day Schedule": {
+      "main": [
+        [
+          {
+            "node": "Check Time Slot Availability",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Time Slot Availability": {
+      "main": [
+        [
+          {
+            "node": "Respond with Availability",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "instanceId": "results-learning-automation"
+  },
+  "tags": []
+}
