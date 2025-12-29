@@ -1521,7 +1521,8 @@
 
             // Add click handlers
             container.querySelectorAll('.checkbox-item').forEach((item, index) => {
-                item.addEventListener('click', () => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
                     toggleCheckbox(item, 'repetitiveTasks', repetitiveTaskOptions[index]);
                 });
             });
@@ -1688,7 +1689,8 @@
 
             // Add click handlers
             container.querySelectorAll('.checkbox-item').forEach((item, index) => {
-                item.addEventListener('click', () => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
                     toggleCheckbox(item, 'chaseTargets', chaseTargetOptions[index]);
                 });
             });
@@ -1722,7 +1724,8 @@
 
             // Add click handlers
             container.querySelectorAll('.checkbox-item').forEach((item, index) => {
-                item.addEventListener('click', () => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
                     toggleCheckbox(item, 'currentTools', toolOptions[index].name);
                 });
             });
