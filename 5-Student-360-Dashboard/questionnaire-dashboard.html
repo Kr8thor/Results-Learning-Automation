@@ -1771,6 +1771,12 @@
             reportCount++;
             const container = document.getElementById('manualReportsList');
             container.insertAdjacentHTML('beforeend', createReportRow(reportCount));
+            // Attach auto-save listeners to new inputs
+            const newRow = document.getElementById(`reportRow_${reportCount}`);
+            newRow.querySelectorAll('input, select').forEach(el => {
+                el.addEventListener('change', autoSave);
+                el.addEventListener('blur', autoSave);
+            });
         }
 
         // Section Navigation
@@ -1949,6 +1955,15 @@
 
         // Submit Questionnaire
         async function submitQuestionnaire() {
+            // Minimal validation - require at least a client name
+            const clientName = document.getElementById('clientName')?.value?.trim();
+            if (!clientName) {
+                showToast('Please enter the Client/Business Name before submitting.', 'error');
+                showSection(1); // Go to section 1
+                document.getElementById('clientName')?.focus();
+                return;
+            }
+
             showLoading(true);
 
             try {
