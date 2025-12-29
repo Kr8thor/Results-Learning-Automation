@@ -1929,6 +1929,7 @@
                     if (responseId) {
                         // Update existing
                         const { error } = await supabaseClient
+                            .schema('results_learning')
                             .from('questionnaire_responses')
                             .update(data)
                             .eq('id', responseId)
@@ -1938,6 +1939,7 @@
                     } else {
                         // Create new
                         const { data: newData, error } = await supabaseClient
+                            .schema('results_learning')
                             .from('questionnaire_responses')
                             .insert([data])
                             .select();
@@ -1977,6 +1979,7 @@
 
                 if (responseId) {
                     const { error } = await supabaseClient
+                        .schema('results_learning')
                         .from('questionnaire_responses')
                         .update(data)
                         .eq('id', responseId);
@@ -1984,6 +1987,7 @@
                     if (error) throw error;
                 } else {
                     const { data: newData, error } = await supabaseClient
+                        .schema('results_learning')
                         .from('questionnaire_responses')
                         .insert([data])
                         .select();
@@ -1997,7 +2001,9 @@
             } catch (error) {
                 showLoading(false);
                 console.error('Submit error:', error);
-                showToast('Error submitting questionnaire. Please try again.', 'error');
+                const errorMsg = error?.message || error?.details || JSON.stringify(error);
+                showToast(`Error: ${errorMsg}`, 'error');
+                alert('Submit error details: ' + JSON.stringify(error, null, 2));
             }
         }
 
