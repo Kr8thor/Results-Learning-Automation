@@ -22,12 +22,12 @@ TOTAL: $38.67/month = $464/year
 
 #### Hetzner (Optimized)
 ```
-Cloud Server (ARM, 2GB RAM): €4.15/month (~$4.50)
-Self-Managed PostgreSQL: €0 (included in OS)
+Cloud Server (ARM, 2GB RAM): $4.50/month
+Self-Managed PostgreSQL: $0 (included in OS)
 Domain: $1.67/month
-SendGrid or Brevo: €0-5/month
+SendGrid or Brevo: $0-5/month
 ───────────────────
-TOTAL: €5.82-10.82/month = $63-130/year
+TOTAL: $6.17-10.50/month = $74-126/year
 ```
 
 **Savings: ~$335/year (72% cheaper)**
@@ -58,9 +58,10 @@ TOTAL: €5.82-10.82/month = $63-130/year
 ## Why Hetzner?
 
 ### 1. **Pricing**
+
 | Provider | 2GB RAM | 4GB RAM | 8GB RAM |
-|---|---|---|---|
-| Hetzner | €4.15 | €6.52 | €10.87 |
+| --- | --- | --- | --- |
+| Hetzner | $4.50 | $7.10 | $11.85 |
 | DigitalOcean | $12 | $18 | $24 |
 | Linode | $12 | $24 | $48 |
 | Vultr | $6 | $12 | $24 |
@@ -103,7 +104,7 @@ TOTAL: €5.82-10.82/month = $63-130/year
 ### Step 2: Spin Up Server
 
 ```
-Server Type: ARM (CAX11) - €4.15/month
+Server Type: ARM (CAX11) - $4.50/month
 - 2GB RAM
 - 40GB SSD
 - 20 Mbps bandwidth
@@ -112,7 +113,7 @@ Server Type: ARM (CAX11) - €4.15/month
 Location: Pick closest to you (optional, doesn't matter much for Results Learning)
 Image: Ubuntu 22.04
 
-Cost: €4.15/month (~$4.50)
+Cost: $4.50/month
 ```
 
 ### Step 3: Install n8n + PostgreSQL
@@ -259,11 +260,11 @@ systemctl enable certbot.timer
 
 **Hetzner Optimized**:
 ```
-Server (CAX11): €4.15 × 12 = €49.80 (~$54)
+Server (CAX11): $4.50 × 12 = $54/year
 Domain: $20/year
-DNS (free): €0
-SSL (Let's Encrypt, free): €0
-Email (Brevo free tier): €0
+DNS (free): $0
+SSL (Let's Encrypt, free): $0
+Email (Brevo free tier): $0
 ───────────────────
 TOTAL: ~$74/year
 ```
@@ -285,8 +286,8 @@ TOTAL: $464/year
 ## Hetzner vs DigitalOcean Feature Comparison
 
 | Feature | Hetzner | DigitalOcean |
-|---|---|---|
-| **Cost** | €4.15/mo | $12 + $15 = $27/mo |
+| --- | --- | --- |
+| **Cost** | $4.50/mo | $12 + $15 = $27/mo |
 | **Setup** | Manual (30 min) | Automated |
 | **Backups** | Manual snapshots (free) | Auto backups ($5/mo) |
 | **Monitoring** | Manual setup | Built-in |
@@ -386,8 +387,9 @@ echo "Database backup: $BACKUP_FILE"
 - n8n officially supports ARM
 
 ### 2. **Keep Single Instance** (Until Needed)
+
 - Don't scale to load balancer unnecessarily
-- One €4.15 server handles 100+ workflows
+- One $4.50 server handles 100+ workflows
 - Scale only when you hit CPU/RAM limits
 
 ### 3. **Use Free Tier Services**
@@ -432,24 +434,24 @@ If you start with DigitalOcean and want to switch later:
 ### Hetzner Setup for Results Learning
 
 **Infrastructure**:
-- Server: Hetzner CAX11 (€4.15/month)
+- Server: Hetzner CAX11 ($4.50/month)
 - Database: Self-managed PostgreSQL (free, included)
 - SSL: Let's Encrypt (free)
-- Total: €5.15/month (~$55/year)
+- Total: $5.50/month (~$66/year)
 
 **YIELD Revenue**: $6,143/year
-**Infrastructure Cost**: $55/year
-**Profit Margin**: 99% ($6,088/year)
+**Infrastructure Cost**: $54/year
+**Profit Margin**: 99% ($6,089/year)
 
 **vs DigitalOcean**:
 - DigitalOcean profit: 92% ($5,679/year)
-- Hetzner profit: 99% ($6,088/year)
-- **Additional profit per client: $409/year**
+- Hetzner profit: 99% ($6,089/year)
+- **Additional profit per client: $410/year**
 
 **Scale to 10 clients**:
-- Hetzner: $550 infrastructure, $61,430 revenue, 99% margin
+- Hetzner: $540 infrastructure, $61,430 revenue, 99% margin
 - DigitalOcean: $4,640 infrastructure, $61,430 revenue, 92% margin
-- **Additional profit on Hetzner: $4,090/year**
+- **Additional profit on Hetzner: $4,100/year**
 
 ---
 
