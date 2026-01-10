@@ -10,14 +10,14 @@
 
 ## Executive Summary
 
-We've completed a comprehensive discovery process with your team and identified **24+ hours per week** in manual, repetitive work that can be eliminated through strategic automation. This proposal outlines:
+We've completed a comprehensive discovery process with your team and identified **34.5 hours per day** (172.5 hours/week) in manual, repetitive work that can be eliminated through strategic automation. This proposal outlines:
 
 1. **YIELD Framework™** - A performance-based automation billing model where you only pay for actual time saved
 2. **Infrastructure Options** - Two clear paths to implement n8n automation
-3. **Financial Impact** - Detailed ROI showing 900%+ return on investment
+3. **Financial Impact** - Detailed ROI showing 1,084%+ return on investment (conservative 50% automation scenario)
 4. **8-Week Accelerated Roadmap** - Phase-by-phase implementation plan
 
-**Bottom line**: Invest $120-174/year in infrastructure + success-based fees on actual time saved = $18,000+ annual value at zero upfront risk.
+**Bottom line**: Invest $120-304/year in infrastructure + success-based fees on actual time saved = $107,640+ annual value freed (conservative) at zero upfront risk.
 
 ---
 
@@ -35,7 +35,7 @@ Our questionnaire revealed **625 minutes/day (10.4 hours/day)** spent on repetit
 | **Jennifer Preston** | Business Manager | 4.75 hrs | Email triage & scheduling |
 | **Nikki Milton** | HR | 4.25 hrs | Staff coordination |
 
-**Combined**: 34.5 hours/week on manual processes = **1,794 hours/year**
+**Combined**: 34.5 hours/day on manual processes = **8,625 hours/year** (at 50% automation potential)
 
 ### Annual Cost to Your Organization
 
@@ -187,44 +187,27 @@ Monthly Infrastructure Cost to Results Learning: $4.50/month (Hetzner direct)
 
 ---
 
-## Financial Impact: Year 1
+## Financial Impact: Year 1 (Detailed Breakdown by Scenario)
 
-### Option A: Shared Infrastructure ($10/month)
+### Quick Summary: All Options
 
-```
-Infrastructure Cost:                         $120/year
-YIELD Services (estimated):                 $3,000-4,000/year*
-─────────────────────────────────────────
-Total Investment:                           $3,120-4,120/year
+Every infrastructure option works with the same YIELD services cost structure. The difference is infrastructure cost - Option A ($120/year) vs Option B ($54-304/year). The financial impact comes entirely from time saved through automation.
 
-Time Saved (measured):                      15+ hours/week
-Value of Time Saved:                        $360/week = $18,000/year†
-─────────────────────────────────────────
-NET BENEFIT:                                $13,880-14,880/year
-ROI:                                        340-450%
-```
+**At Conservative 50% Automation (86.25 hrs/week)**:
 
-*Estimate based on questionnaire discovery; actual YIELD services determined by measurement
-†At average $24/hour salary rate
+- Investment: $9,090/year
+- Value freed: $107,640/year
+- Net benefit: $98,550/year
+- ROI: 1,084%
 
-### Option B: Dedicated Server with Optional Support
+**At Moderate 60% Automation (103.5 hrs/week - LIKELY)**:
 
-```
-Infrastructure Cost:                         $54/year (Hetzner direct)
-Setup & Support (B1 or B2):                 $50-220/year
-─────────────────────────────────────────
-Total Investment:                           $104-304/year
+- Investment: $10,884/year
+- Value freed: $129,168/year
+- Net benefit: $118,284/year
+- ROI: 1,087%
 
-Time Saved (measured):                      15+ hours/week
-Value of Time Saved:                        $360/week = $18,000/year†
-─────────────────────────────────────────
-NET BENEFIT:                                $17,696-17,896/year
-ROI:                                        5,800-17,200%
-```
-
-†At average $24/hour salary rate
-
-**Key insight**: Option B has exceptional ROI because you own the infrastructure at minimal cost. B1 ($50 setup) is best for tech-savvy teams; B2 ($100 setup + $10/month) adds ongoing monitoring and support for peace of mind.
+*See detailed Investment Comparison tables below for all four scenarios across all infrastructure options.*
 
 ---
 
@@ -394,15 +377,27 @@ ROI:                                        5,800-17,200%
 
 ### The Real Cost of Doing Nothing
 
-```
-625 min/day on manual work × 250 work days = 155,000 min/year
-155,000 min ÷ 60 = 2,583 hours/year
+If you don't automate, your team continues spending 34.5 hours/day on manual work:
 
-At $24/hour average: 2,583 × $24 = $61,992 in lost productivity
-Per person per year of freed capacity: $6,000-15,000
+```
+Conservative Scenario (50% of identified work automated):
+- Hours currently spent manually: 17.25 hours/day
+- At $24/hour: $414/day in salary on manual work
+- Per year (250 work days): $103,500 in salary on repetitive tasks
+- What you're NOT investing: $9,090/year in automation
+- Net loss from inaction: $94,410/year
+
+Moderate Scenario (60% automated):
+- Hours currently spent manually: 20.7 hours/day
+- At $24/hour: $496.80/day in salary on manual work
+- Per year (250 work days): $124,200 in salary on repetitive tasks
+- What you're NOT investing: $10,884/year in automation
+- Net loss from inaction: $113,316/year
 ```
 
-**Your team could redirect $24,000-30,000/year of productive capacity to high-value work** like:
+**By NOT automating, you're choosing to keep paying $24,000-124,000/year in salary for work that software could do.**
+
+**By automating, your team can redirect that capacity to high-value work** like:
 - Program development and improvement
 - Strategic initiatives
 - Client relationship building
