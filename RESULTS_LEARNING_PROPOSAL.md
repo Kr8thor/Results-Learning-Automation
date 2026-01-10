@@ -408,9 +408,10 @@ Moderate Scenario (60% automated):
 
 ## Closing
 
-This isn't about technology - it's about reclaiming **24+ hours per week** that your team is currently spending on work that machines should do.
+This isn't about technology - it's about reclaiming **34.5 hours per day** (172.5 hours/week) that your team is currently spending on work that machines should do.
 
 **YIELD Framework™ means**:
+
 - You pay only for actual time saved (measured monthly)
 - Zero upfront technology investment (just $10-30/month)
 - Your team gets better, faster tools
@@ -425,7 +426,7 @@ This isn't about technology - it's about reclaiming **24+ hours per week** that 
 **Option A**: Let us manage infrastructure for $10/month (simplest path)
 **Option B**: You manage infrastructure yourself at $4.50/month + optional support (B1: $50 setup / B2: $100 setup + $10/month)
 
-**Either way**: Your team gets back 15+ hours/week, measured monthly, paid only for actual results.
+**Either way**: Conservative automation frees 86+ hours/week of your team's capacity, measured monthly, paid only for actual results.
 
 ---
 
