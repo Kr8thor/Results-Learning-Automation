@@ -353,42 +353,44 @@ ROI:                                        5,800-17,200%
 
 ### Year 1 Costs by Time Saved Scenario
 
-*Based on questionnaire discovery: 34.5 hours/week manual work identified*
+*Based on questionnaire discovery: 34.5 hours/week identified + 24/7 automation potential*
+*Note: Workflows run continuously including nights, weekends, holidays (52+ weeks/year effective)*
 
-#### Conservative Phase 1 (10 hours/week saved)
-
-| Option | Infrastructure | YIELD Services | Total Year 1 | Value Freed | ROI |
-|---|---|---|---|---|---|
-| **A: Shared** | $120 | $1,200* | $1,320 | $12,000 | 809% |
-| **B1: Setup Only** | $104 | $1,200* | $1,304 | $12,000 | 819% |
-| **B2: Managed Support** | $304 | $1,200* | $1,504 | $12,000 | 696% |
-
-#### Moderate Phase 1 (15 hours/week saved) - LIKELY FOR INITIAL 4 WORKFLOWS
+#### Conservative Phase 1 (20 hours/week × 52 weeks = 1,040 hours/year)
 
 | Option | Infrastructure | YIELD Services | Total Year 1 | Value Freed | ROI |
 |---|---|---|---|---|---|
-| **A: Shared** | $120 | $1,800* | $1,920 | $18,000 | 837% |
-| **B1: Setup Only** | $104 | $1,800* | $1,904 | $18,000 | 846% |
-| **B2: Managed Support** | $304 | $1,800* | $2,104 | $18,000 | 755% |
+| **A: Shared** | $120 | $2,080* | $2,200 | $24,960 | 1,034% |
+| **B1: Setup Only** | $104 | $2,080* | $2,184 | $24,960 | 1,043% |
+| **B2: Managed Support** | $304 | $2,080* | $2,384 | $24,960 | 948% |
 
-#### Aggressive Phase 1 (20 hours/week saved)
-
-| Option | Infrastructure | YIELD Services | Total Year 1 | Value Freed | ROI |
-|---|---|---|---|---|---|
-| **A: Shared** | $120 | $2,400* | $2,520 | $24,000 | 852% |
-| **B1: Setup Only** | $104 | $2,400* | $2,504 | $24,000 | 859% |
-| **B2: Managed Support** | $304 | $2,400* | $2,704 | $24,000 | 788% |
-
-#### Phase 2 Potential (30+ hours/week saved) - FULL SUITE AUTOMATION
+#### Moderate Phase 1 (30 hours/week × 52 weeks = 1,560 hours/year) - LIKELY FOR INITIAL 4 WORKFLOWS
 
 | Option | Infrastructure | YIELD Services | Total Year 1 | Value Freed | ROI |
 |---|---|---|---|---|---|
-| **A: Shared** | $120 | $3,600* | $3,720 | $36,000 | 868% |
-| **B1: Setup Only** | $104 | $3,600* | $3,704 | $36,000 | 872% |
-| **B2: Managed Support** | $304 | $3,600* | $3,904 | $36,000 | 822% |
+| **A: Shared** | $120 | $3,120* | $3,240 | $37,440 | 1,055% |
+| **B1: Setup Only** | $104 | $3,120* | $3,224 | $37,440 | 1,060% |
+| **B2: Managed Support** | $304 | $3,120* | $3,424 | $37,440 | 993% |
 
-\*Based on €3-10/hour × actual hours saved per week × 50 work weeks
-†Value = hours saved × $24/hour average staff salary
+#### Aggressive Phase 1 (40 hours/week × 52 weeks = 2,080 hours/year)
+
+| Option | Infrastructure | YIELD Services | Total Year 1 | Value Freed | ROI |
+|---|---|---|---|---|---|
+| **A: Shared** | $120 | $4,160* | $4,280 | $49,920 | 1,067% |
+| **B1: Setup Only** | $104 | $4,160* | $4,264 | $49,920 | 1,074% |
+| **B2: Managed Support** | $304 | $4,160* | $4,464 | $49,920 | 1,020% |
+
+#### Phase 2 Potential (50+ hours/week × 52 weeks = 2,600+ hours/year) - FULL SUITE AUTOMATION
+
+| Option | Infrastructure | YIELD Services | Total Year 1 | Value Freed | ROI |
+|---|---|---|---|---|---|
+| **A: Shared** | $120 | $5,200* | $5,320 | $62,400 | 1,073% |
+| **B1: Setup Only** | $104 | $5,200* | $5,304 | $62,400 | 1,076% |
+| **B2: Managed Support** | $304 | $5,200* | $5,504 | $62,400 | 1,032% |
+
+\*Based on €3-10/hour × annual hours saved (52 weeks including nights/weekends/holidays when workflows run)
+†Value = hours freed × $24/hour average staff salary
+**Key insight**: Every percentage point of the 34.5 hours/week identified = $8,736/year in value (52 weeks × $24/hr)
 
 ### The Real Cost of Doing Nothing
 
