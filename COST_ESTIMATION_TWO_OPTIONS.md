@@ -224,28 +224,16 @@ Your Profit:        $0-200
 ROI: 0% (you break even or small one-time fee)
 ```
 
-**Scenario B2: Managed Service ($15/month)**
+**Scenario B2: Managed Support ($10/month)**
 ```
-Setup Fee:          $200 (one-time)
-Monthly from them:  $4.50 to Hetzner + $15 to you
-Your Profit:        $15/month = $180/year
-Your Workload:      ~1.5 hours/month
+Setup Fee:          $100 (one-time)
+Monthly from them:  $4.50 to Hetzner + $10 to you
+Your Profit:        $10/month = $120/year
+Your Workload:      ~1 hour/month
 
-Their Cost:         $4.50 + $15 = ~$234/year
-Your Profit:        $200 + $180 = $380/year
-Your Hourly Rate:   $180/year ÷ 18 hours/year = $10/hour (low)
-```
-
-**Scenario B3: Full Managed Service ($30/month)**
-```
-Setup Fee:          $500 (one-time)
-Monthly from them:  $4.50 to Hetzner + $30 to you
-Your Profit:        $30/month = $360/year
-
-Their Cost:         $4.50 + $30 = ~$414/year
-Your Profit:        $500 + $360 = $860/year
-Your Workload:      ~2 hours/month (higher SLA)
-Your Hourly Rate:   $360/year ÷ 24 hours/year = $15/hour
+Their Cost:         $4.50 + $10 = ~$174/year
+Your Profit:        $100 + $120 = $220/year
+Your Hourly Rate:   $120/year ÷ 12 hours/year = $10/hour
 ```
 
 ---
@@ -289,16 +277,16 @@ You bill additional management if desired: $0-360/year
 6. ✅ Clean billing: One line item on their invoice
 7. ✅ Flexibility: Can upgrade server as they grow
 
-### Alternative: **OPTION B with Scenario B3**
+### Alternative: **OPTION B with Scenario B2**
 
-**Setup: $500 | Monthly: $30 ($360/year)**
+**Setup: $100 | Monthly: $10 ($120/year)**
 
 **Rationale**:
 1. ✅ They own their infrastructure (independence)
-2. ✅ You provide premium support (higher value)
-3. ✅ Higher perceived value ($500 setup shows professional service)
-4. ✅ Better for larger deployments
-5. ✅ They feel ownership, more long-term commitment
+2. ✅ You provide ongoing support (monthly monitoring)
+3. ✅ Lower cost than shared option
+4. ✅ Good balance between control and support
+5. ✅ They feel ownership of their infrastructure
 
 ---
 
@@ -308,7 +296,7 @@ You bill additional management if desired: $0-360/year
 > "We host your n8n instance on our managed infrastructure at $10/month. This is a 96% discount from DigitalOcean ($27/month) and includes monitoring, backups, and updates. You pay a simple fixed fee, we handle all infrastructure complexity."
 
 ### Option B Pitch (Dedicated Server)
-> "You get your own dedicated Hetzner server ($4.50/month, billed directly to you). We set it up ($500 one-time) and manage it monthly ($30/month) with weekly monitoring and priority support. Full independence, professional management."
+> "You get your own dedicated Hetzner server ($4.50/month, billed directly to you). We set it up ($100 one-time) and offer optional managed support ($10/month) with monthly monitoring and updates. Full independence with support available."
 
 ---
 
