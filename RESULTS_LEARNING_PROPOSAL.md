@@ -15,9 +15,9 @@ We've completed a comprehensive discovery process with your team and identified 
 1. **YIELD Framework™** - A performance-based automation billing model where you only pay for actual time saved
 2. **Infrastructure Options** - Two clear paths to implement n8n automation
 3. **Financial Impact** - Detailed ROI showing 900%+ return on investment
-4. **12-Month Roadmap** - Phase-by-phase implementation plan
+4. **8-Week Accelerated Roadmap** - Phase-by-phase implementation plan
 
-**Bottom line**: Invest $120-360/year in infrastructure + success-based fees on actual time saved = $6,000+ annual value at zero upfront risk.
+**Bottom line**: Invest $120-174/year in infrastructure + success-based fees on actual time saved = $18,000+ annual value at zero upfront risk.
 
 ---
 
@@ -168,33 +168,22 @@ Monthly Infrastructure Cost to Results Learning: $4.50/month (Hetzner direct)
 
 **Our role** (choose one):
 
-#### B1: Setup Only ($0-200 one-time)
+#### B1: Setup Only ($50 one-time)
 - We set up n8n and PostgreSQL on your server
 - We train your team
 - You manage the server yourself (only call us for emergency support)
 
-**Your cost**: $4.50/month (Hetzner) + $0 (optional support)
+**Your cost**: $50 setup + $4.50/month (Hetzner) = ~$104/year
 **Best for**: Tech-savvy teams, maximum autonomy
 
-#### B2: Managed Support ($200 setup + $15/month)
+#### B2: Managed Support ($100 one-time + $10/month)
 - Everything in B1, plus:
-- Weekly monitoring & health checks
+- Monthly monitoring & health checks
 - Monthly updates & security patches
 - Email support (48-hour response)
 
-**Your cost**: $4.50/month (Hetzner) + $15/month = ~$234/year
+**Your cost**: $100 setup + $4.50/month (Hetzner) + $10/month = ~$304/year
 **Best for**: Peace of mind, ongoing support
-
-#### B3: Premium Managed Service ($500 setup + $30/month)
-- Everything in B2, plus:
-- Weekly proactive monitoring
-- Performance optimization
-- Daily backups verified
-- Priority support (24-hour response)
-- Quarterly business reviews
-
-**Your cost**: $4.50/month (Hetzner) + $30/month = ~$414/year
-**Best for**: Enterprise-grade reliability, dedicated attention
 
 ---
 
@@ -204,38 +193,38 @@ Monthly Infrastructure Cost to Results Learning: $4.50/month (Hetzner direct)
 
 ```
 Infrastructure Cost:                         $120/year
-YIELD Services (estimated):                 $6,000/year*
+YIELD Services (estimated):                 $3,000-4,000/year*
 ─────────────────────────────────────────
-Total Investment:                           $6,120/year
+Total Investment:                           $3,120-4,120/year
 
-Time Saved (measured):                      24+ hours/week
-Value of Time Saved:                        $576/week = $30,000/year†
+Time Saved (measured):                      15+ hours/week
+Value of Time Saved:                        $360/week = $18,000/year†
 ─────────────────────────────────────────
-NET BENEFIT:                                $24,000/year
-ROI:                                        390%
+NET BENEFIT:                                $13,880-14,880/year
+ROI:                                        340-450%
 ```
 
 *Estimate based on questionnaire discovery; actual YIELD services determined by measurement
 †At average $24/hour salary rate
 
-### Option B: Dedicated Server with Premium Management ($30/month)
+### Option B: Dedicated Server with Optional Support
 
 ```
-Infrastructure Cost:                         $354/year (Hetzner direct)
-Managed Services (Premium):                  $360/year
+Infrastructure Cost:                         $54/year (Hetzner direct)
+Setup & Support (B1 or B2):                 $50-220/year
 ─────────────────────────────────────────
-Total Investment:                           $714/year
+Total Investment:                           $104-304/year
 
-Time Saved (measured):                      24+ hours/week
-Value of Time Saved:                        $576/week = $30,000/year†
+Time Saved (measured):                      15+ hours/week
+Value of Time Saved:                        $360/week = $18,000/year†
 ─────────────────────────────────────────
-NET BENEFIT:                                $29,286/year
-ROI:                                        4,100%
+NET BENEFIT:                                $17,696-17,896/year
+ROI:                                        5,800-17,200%
 ```
 
 †At average $24/hour salary rate
 
-**Key insight**: Option B has higher ROI because our management fee ($30/month) is lower than the infrastructure we'd normally charge ($120/month). Trade-off: You own the infrastructure, which requires more on your side.
+**Key insight**: Option B has exceptional ROI because you own the infrastructure at minimal cost. B1 ($50 setup) is best for tech-savvy teams; B2 ($100 setup + $10/month) adds ongoing monitoring and support for peace of mind.
 
 ---
 
@@ -364,11 +353,11 @@ ROI:                                        4,100%
 
 ### Year 1 Costs (Including YIELD Services & Infrastructure)
 
-| Option | Infrastructure | YIELD Services | Total Year 1 | Monthly |
+| Option | Infrastructure & Setup | YIELD Services | Total Year 1 | Monthly |
 |---|---|---|---|---|
-| **A: Shared** | $120 | $6,000* | $6,120 | $510 |
-| **B: Dedicated** | $354 | $6,000* | $6,354 | $530 |
-| **B: Premium** | $714 | $6,000* | $6,714 | $560 |
+| **A: Shared** | $120 | $3,000-4,000* | $3,120-4,120 | $260-343 |
+| **B1: Setup Only** | $104 | $3,000-4,000* | $3,104-4,104 | $259-342 |
+| **B2: Managed Support** | $304 | $3,000-4,000* | $3,304-4,304 | $275-359 |
 | **Doing Nothing** | $0 | $0 | $0 | $0 |
 
 \*Estimated based on discovery; actual determined by measurement
@@ -408,10 +397,10 @@ This isn't about technology - it's about reclaiming **24+ hours per week** that 
 
 **The choice is simple**:
 
-**Option A**: Let us manage infrastructure for $10/month
-**Option B**: You manage infrastructure yourself
+**Option A**: Let us manage infrastructure for $10/month (simplest path)
+**Option B**: You manage infrastructure yourself at $4.50/month + optional support (B1: $50 setup / B2: $100 setup + $10/month)
 
-**Either way**: Your team gets back 24+ hours/week, measured monthly, paid only for actual results.
+**Either way**: Your team gets back 15+ hours/week, measured monthly, paid only for actual results.
 
 ---
 
