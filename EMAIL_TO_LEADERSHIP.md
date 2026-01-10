@@ -33,7 +33,7 @@ We've developed a solution called the **YIELD Framework™** - a performance-bas
 - Best for focusing on results vs. infrastructure
 
 **Option B: Dedicated Server**
-- You own your server ($4.15/month to Hetzner)
+- You own your server ($4.50/month to Hetzner)
 - Optional management support ($30/month)
 - Best for maximum control
 - More setup time (3-5 days)
@@ -59,7 +59,7 @@ All documents are in the GitHub repository: https://github.com/Kr8thor/Results-L
 4. **Weeks of Feb 3-17**: Build and test automations
 5. **Feb 24+**: Go live and start saving time
 
-**The key difference**: We measure everything independently. We don't charge based on promises. Every month, you see exactly how many hours you saved, how much that's worth, and how much you pay (€3-10/hour depending on workflow complexity).
+**The key difference**: We measure everything independently. We don't charge based on promises. Every month, you see exactly how many hours you saved, how much that's worth, and how much you pay ($3-10/hour depending on workflow complexity).
 
 **Cyle**, your 4 hours/day of data entry - we can automate that almost entirely. Imagine having 20 hours/week back for strategy and growth instead of data entry.
 

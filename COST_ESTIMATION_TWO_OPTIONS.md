@@ -389,12 +389,12 @@ Managed Services:
   Subtotal (Managed Services)                             $30.00
 
 Infrastructure (Billed by Hetzner):
-  Hetzner CAX11 Server              Billed separately     €4.15
+  Hetzner CAX11 Server              Billed separately     $4.50
   (Results Learning pays Hetzner directly)
   ─────────────────────────────────────────────────────────────
 
 TOTAL FROM RESULTS LEARNING:                              €542.04
-(Plus Hetzner €4.15/month charged directly to them)
+(Plus Hetzner $4.50/month charged directly to them)
 ```
 
 ---

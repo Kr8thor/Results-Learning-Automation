@@ -230,7 +230,7 @@
 
 ### Infrastructure Costs
 - **Option A (shared)**: $10/month ($120/year)
-- **Option B (dedicated)**: €4.15/month to Hetzner + optional management
+- **Option B (dedicated)**: $4.50/month to Hetzner + optional management
 - **Savings vs DigitalOcean**: 84% ($335+/year per client)
 - **Hetzner CAX11 specs**: 2GB RAM, 40GB SSD, 20Mbps bandwidth
 

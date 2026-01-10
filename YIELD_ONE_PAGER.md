@@ -57,10 +57,10 @@ Setup Time: 24-48 hours
 
 ### Option B: Dedicated Server
 **You**: Own your own server
-**Us**: Optional support ($354-714/year if you choose)
+**Us**: Optional support ($414-714/year if you choose)
 
 ```
-Your Cost: €4.15/month to Hetzner + optional $30/month support
+Your Cost: $4.50/month to Hetzner + optional $30/month support
 What's Included: Your own dedicated server, your control
 Perfect For: Maximum autonomy, enterprise requirements
 Setup Time: 3-5 days

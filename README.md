@@ -83,7 +83,7 @@ Results Learning's team spends **625 minutes/day** on repetitive manual work. We
 
 ### Option B: Dedicated Server
 
-- **Your cost**: €4.15/month + optional $30/month management
+- **Your cost**: $4.50/month + optional $30/month management
 - **What's included**: Your own Hetzner server
 - **Setup time**: 3-5 days
 - **Best for**: Maximum control

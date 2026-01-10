@@ -127,7 +127,7 @@ Monthly Cost to Results Learning: $10/month ($120/year)
 - Unlimited workflows (n8n can handle 100+)
 
 **How it works**:
-- We maintain a server at Hetzner (€4.15/month)
+- We maintain a server at Hetzner ($4.50/month)
 - You're one of up to 10 clients on that server
 - Each client gets isolated n8n instance
 - We bill you monthly, you pay us
@@ -158,7 +158,7 @@ Total Monthly:                                $310-510
 **You own your server. We manage setup and optional support.**
 
 ```
-Monthly Infrastructure Cost to Results Learning: $4.15/month (Hetzner direct)
+Monthly Infrastructure Cost to Results Learning: $4.50/month (Hetzner direct)
 ```
 
 **What you own**:
@@ -173,7 +173,7 @@ Monthly Infrastructure Cost to Results Learning: $4.15/month (Hetzner direct)
 - We train your team
 - You manage the server yourself (only call us for emergency support)
 
-**Your cost**: €4.15/month (Hetzner) + $0 (optional support)
+**Your cost**: $4.50/month (Hetzner) + $0 (optional support)
 **Best for**: Tech-savvy teams, maximum autonomy
 
 #### B2: Managed Support ($200 setup + $15/month)
@@ -182,7 +182,7 @@ Monthly Infrastructure Cost to Results Learning: $4.15/month (Hetzner direct)
 - Monthly updates & security patches
 - Email support (48-hour response)
 
-**Your cost**: €4.15/month (Hetzner) + $15/month = ~$172/year
+**Your cost**: $4.50/month (Hetzner) + $15/month = ~$234/year
 **Best for**: Peace of mind, ongoing support
 
 #### B3: Premium Managed Service ($500 setup + $30/month)
@@ -193,7 +193,7 @@ Monthly Infrastructure Cost to Results Learning: $4.15/month (Hetzner direct)
 - Priority support (24-hour response)
 - Quarterly business reviews
 
-**Your cost**: €4.15/month (Hetzner) + $30/month = ~$354/year
+**Your cost**: $4.50/month (Hetzner) + $30/month = ~$414/year
 **Best for**: Enterprise-grade reliability, dedicated attention
 
 ---

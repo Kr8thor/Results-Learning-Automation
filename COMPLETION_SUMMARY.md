@@ -155,7 +155,7 @@ Payback: 6 months
 - **Best for**: Simplicity, focus on results
 
 ### Option B: Dedicated Server
-- **Cost**: €4.15/month + optional $30/month management
+- **Cost**: $4.50/month + optional $30/month management
 - **What's included**: Your own Hetzner server
 - **Setup time**: 3-5 days
 - **Best for**: Maximum control
@@ -296,7 +296,7 @@ All 15 documents are organized in the GitHub repository:
 
 ### Infrastructure Comparison
 - **Option A cost**: $120/year
-- **Option B cost**: €354-714/year
+- **Option B cost**: $414-714/year
 - **DigitalOcean cost**: $464/year
 - **Hetzner savings**: 84% cheaper
 

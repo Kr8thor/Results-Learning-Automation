@@ -120,7 +120,7 @@
 > "Option B: You own your own Hetzner server. We can set it up for you, and if you want, we can manage it with ongoing support. But the infrastructure is yours."
 
 **Show**:
-- Your infrastructure cost: €4.15/month (paid directly to Hetzner)
+- Your infrastructure cost: $4.50/month (paid directly to Hetzner)
 - Optional management: $30/month for premium support
 - Control: Total ownership, you're responsible for server maintenance
 - Setup time: 3-5 days
