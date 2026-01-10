@@ -353,44 +353,44 @@ ROI:                                        5,800-17,200%
 
 ### Year 1 Costs by Time Saved Scenario
 
-*Based on questionnaire discovery: 34.5 hours/week identified + 24/7 automation potential*
-*Note: Workflows run continuously including nights, weekends, holidays (52+ weeks/year effective)*
+*Based on questionnaire discovery: 34.5 HOURS/DAY identified across team*
+*Note: Workflows run continuously including nights, weekends, holidays (52 weeks/year)*
 
-#### Conservative Phase 1 (20 hours/week × 52 weeks = 1,040 hours/year)
-
-| Option | Infrastructure | YIELD Services | Total Year 1 | Value Freed | ROI |
-|---|---|---|---|---|---|
-| **A: Shared** | $120 | $2,080* | $2,200 | $24,960 | 1,034% |
-| **B1: Setup Only** | $104 | $2,080* | $2,184 | $24,960 | 1,043% |
-| **B2: Managed Support** | $304 | $2,080* | $2,384 | $24,960 | 948% |
-
-#### Moderate Phase 1 (30 hours/week × 52 weeks = 1,560 hours/year) - LIKELY FOR INITIAL 4 WORKFLOWS
+#### Conservative Phase 1 (50% of identified hours = 17.25 hrs/day = 86.25 hrs/week = 4,485 hrs/year)
 
 | Option | Infrastructure | YIELD Services | Total Year 1 | Value Freed | ROI |
 |---|---|---|---|---|---|
-| **A: Shared** | $120 | $3,120* | $3,240 | $37,440 | 1,055% |
-| **B1: Setup Only** | $104 | $3,120* | $3,224 | $37,440 | 1,060% |
-| **B2: Managed Support** | $304 | $3,120* | $3,424 | $37,440 | 993% |
+| **A: Shared** | $120 | $8,970* | $9,090 | $107,640 | 1,084% |
+| **B1: Setup Only** | $104 | $8,970* | $9,074 | $107,640 | 1,086% |
+| **B2: Managed Support** | $304 | $8,970* | $9,274 | $107,640 | 1,060% |
 
-#### Aggressive Phase 1 (40 hours/week × 52 weeks = 2,080 hours/year)
-
-| Option | Infrastructure | YIELD Services | Total Year 1 | Value Freed | ROI |
-|---|---|---|---|---|---|
-| **A: Shared** | $120 | $4,160* | $4,280 | $49,920 | 1,067% |
-| **B1: Setup Only** | $104 | $4,160* | $4,264 | $49,920 | 1,074% |
-| **B2: Managed Support** | $304 | $4,160* | $4,464 | $49,920 | 1,020% |
-
-#### Phase 2 Potential (50+ hours/week × 52 weeks = 2,600+ hours/year) - FULL SUITE AUTOMATION
+#### Moderate Phase 1 (60% of identified = 20.7 hrs/day = 103.5 hrs/week = 5,382 hrs/year) - LIKELY FOR INITIAL 4 WORKFLOWS
 
 | Option | Infrastructure | YIELD Services | Total Year 1 | Value Freed | ROI |
 |---|---|---|---|---|---|
-| **A: Shared** | $120 | $5,200* | $5,320 | $62,400 | 1,073% |
-| **B1: Setup Only** | $104 | $5,200* | $5,304 | $62,400 | 1,076% |
-| **B2: Managed Support** | $304 | $5,200* | $5,504 | $62,400 | 1,032% |
+| **A: Shared** | $120 | $10,764* | $10,884 | $129,168 | 1,087% |
+| **B1: Setup Only** | $104 | $10,764* | $10,868 | $129,168 | 1,088% |
+| **B2: Managed Support** | $304 | $10,764* | $11,068 | $129,168 | 1,067% |
 
-\*Based on €3-10/hour × annual hours saved (52 weeks including nights/weekends/holidays when workflows run)
+#### Aggressive Phase 1 (75% of identified = 25.875 hrs/day = 129.375 hrs/week = 6,728 hrs/year)
+
+| Option | Infrastructure | YIELD Services | Total Year 1 | Value Freed | ROI |
+|---|---|---|---|---|---|
+| **A: Shared** | $120 | $13,456* | $13,576 | $161,472 | 1,090% |
+| **B1: Setup Only** | $104 | $13,456* | $13,560 | $161,472 | 1,091% |
+| **B2: Managed Support** | $304 | $13,456* | $13,760 | $161,472 | 1,074% |
+
+#### Phase 2 Potential (90% of identified = 31.05 hrs/day = 155.25 hrs/week = 8,073 hrs/year) - FULL SUITE AUTOMATION
+
+| Option | Infrastructure | YIELD Services | Total Year 1 | Value Freed | ROI |
+|---|---|---|---|---|---|
+| **A: Shared** | $120 | $16,146* | $16,266 | $193,752 | 1,092% |
+| **B1: Setup Only** | $104 | $16,146* | $16,250 | $193,752 | 1,093% |
+| **B2: Managed Support** | $304 | $16,146* | $16,450 | $193,752 | 1,078% |
+
+\*Based on €3-10/hour × annual hours saved (52 weeks of 24/7 automation)
 †Value = hours freed × $24/hour average staff salary
-**Key insight**: Every percentage point of the 34.5 hours/week identified = $8,736/year in value (52 weeks × $24/hr)
+**Key insight**: The 34.5 hours/day identified = $207,360/year potential value if fully automated (100% of hours)
 
 ### The Real Cost of Doing Nothing
 
