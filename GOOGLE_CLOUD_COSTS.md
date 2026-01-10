@@ -1,7 +1,14 @@
 # Google Cloud API Costs Analysis
 ## Results Learning - Gmail & Sheets Integration
 
-**Short Answer**: Google Cloud APIs are FREE for Results Learning's use case.
+**Short Answer**: Google Cloud APIs are FREE for Results Learning's use case (within free tier quotas).
+
+**More Accurate Answer**:
+
+- If using Google Workspace credentials: Completely free, no billing
+- If using Google Cloud Console project: Free tier allows 1M requests/month per API
+- Results Learning usage: ~10,000 requests/month (well under free tier)
+- **Cost**: $0 (well within free tier)
 
 ---
 
@@ -62,15 +69,32 @@ Google doesn't charge for API usage for these services. There are no quotas or c
 ## How Google Cloud Console Works (If Needed)
 
 ### Do You Need to Create a Google Cloud Project?
-**Short answer**: Only if you want to track API usage.
+
+**Short answer**: Only if you want to enable APIs that aren't in Google Workspace.
+
+#### Path 1: Use Google Workspace Credentials (Recommended)
+
+- Gmail & Sheets are already in your Google account
+- Access them directly from n8n
+- No Google Cloud Console needed
+- No credit card required
+- Cost: $0
+
+#### Path 2: Create Google Cloud Console Project (If needed for other APIs)
+
+- Set up project at console.cloud.google.com
+- Requires credit card (for quota tracking, not billing)
+- Free tier: 1M requests/month per API
+- Results Learning usage: ~10,000 requests/month
+- Cost: $0 (well within free tier)
 
 **What it gives you**:
 - API usage dashboard
-- Cost monitoring
+- Cost monitoring (for transparency)
 - API key management
 - OAuth configuration
 
-**Cost**: Free (no charges unless you use paid services)
+**Cost**: Free for Results Learning's usage (within free tier quotas)
 
 ### If You Do Create One (Optional Setup)
 
