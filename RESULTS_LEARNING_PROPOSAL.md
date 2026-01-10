@@ -351,16 +351,41 @@ ROI:                                        5,800-17,200%
 
 ## Investment Comparison
 
-### Year 1 Costs (Including YIELD Services & Infrastructure)
+### Year 1 Costs by Time Saved Scenario
 
-| Option | Infrastructure & Setup | YIELD Services | Total Year 1 | Monthly |
+#### Conservative (10 hours/week saved)
+
+| Option | Infrastructure | YIELD Services | Total Year 1 | ROI |
 |---|---|---|---|---|
-| **A: Shared** | $120 | $3,000-4,000* | $3,120-4,120 | $260-343 |
-| **B1: Setup Only** | $104 | $3,000-4,000* | $3,104-4,104 | $259-342 |
-| **B2: Managed Support** | $304 | $3,000-4,000* | $3,304-4,304 | $275-359 |
-| **Doing Nothing** | $0 | $0 | $0 | $0 |
+| **A: Shared** | $120 | $1,200* | $1,320 | 372% |
+| **B1: Setup Only** | $104 | $1,200* | $1,304 | 376% |
+| **B2: Managed Support** | $304 | $1,200* | $1,504 | 299% |
 
-\*Estimated based on discovery; actual determined by measurement
+#### Moderate (15 hours/week saved) - LIKELY SCENARIO
+
+| Option | Infrastructure | YIELD Services | Total Year 1 | ROI |
+|---|---|---|---|---|
+| **A: Shared** | $120 | $1,800* | $1,920 | 837% |
+| **B1: Setup Only** | $104 | $1,800* | $1,904 | 844% |
+| **B2: Managed Support** | $304 | $1,800* | $2,104 | 754% |
+
+#### Aggressive (20 hours/week saved)
+
+| Option | Infrastructure | YIELD Services | Total Year 1 | ROI |
+|---|---|---|---|---|
+| **A: Shared** | $120 | $2,400* | $2,520 | 1,190% |
+| **B1: Setup Only** | $104 | $2,400* | $2,504 | 1,198% |
+| **B2: Managed Support** | $304 | $2,400* | $2,704 | 1,109% |
+
+#### Maximum (24+ hours/week saved)
+
+| Option | Infrastructure | YIELD Services | Total Year 1 | ROI |
+|---|---|---|---|---|
+| **A: Shared** | $120 | $2,880* | $3,000 | 1,488% |
+| **B1: Setup Only** | $104 | $2,880* | $2,984 | 1,497% |
+| **B2: Managed Support** | $304 | $2,880* | $3,184 | 1,408% |
+
+\*Based on €3-10/hour × actual hours saved per week × 50 work weeks (conservative estimate)
 
 ### The Real Cost of Doing Nothing
 
