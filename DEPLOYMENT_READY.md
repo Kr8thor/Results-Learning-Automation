@@ -307,25 +307,30 @@ Monthly ROI: 350%+ (massive)
 ## Financial Summary
 
 ### This Week's Approval Needed
+
 - Choose infrastructure option
 - Confirm API access
 - Commit team time (8 hours over 8 weeks)
+- Sign standard NDA (data protection)
 
 ### Week 1 Deployment Starts
+
 - Server spinning up
 - Workflows being built
-- 5 hours/week savings by end of week
+- NDA execution complete, system access begins
 
 ### Week 8 Deployment Complete
+
 - Full suite live
 - YIELD billing operational
-- First invoice generated
+- First invoice generated (conservative 50% automation scenario)
 
 ### Year 1 Complete
-- $18,000 in time freed
-- $3,120-4,360 invested
-- $14,640 net benefit
-- 450% ROI
+
+- $107,640 in time freed (conservative 50% automation)
+- $9,090 invested
+- $98,550 net benefit
+- 1,084% ROI
 
 ### Year 2+
 - Monthly cost: $260-360 (infrastructure + YIELD)

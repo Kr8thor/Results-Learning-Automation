@@ -388,9 +388,9 @@ All materials are prepared, tested, and ready to present. The proposal is compel
 
 The discovery and proposal phase for Results Learning's YIELD Framework™ automation project is complete. All materials have been prepared, documented, and are ready for presentation to leadership.
 
-**Key Achievement**: Identified $62,000/year in potential productivity gains through automation of 625 minutes/day of manual work.
+**Key Achievement**: Identified $62,000/year in potential productivity gains through automation of 34.5 hours/day of manual work.
 
-**Key Offering**: YIELD Framework™ - performance-based automation with 362% ROI and zero upfront risk.
+**Key Offering**: YIELD Framework™ - performance-based automation with 1,084%+ ROI (conservative) and zero upfront risk.
 
 **Next Action**: Send EMAIL_TO_LEADERSHIP.md and schedule presentation for next week.
 

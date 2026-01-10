@@ -7,32 +7,34 @@
 
 **What**: Deploy 4 automation workflows in 8 weeks
 **When**: Start next week, live by week 8
-**Cost**: $6.17/month infrastructure + €3-10/hour for actual time saved
-**Benefit**: 15+ hours/week time savings immediately
+**Cost**: $120-304/year infrastructure + €3-10/hour for actual time saved
+**Benefit**: 86+ hours/week freed (conservative 50% of identified work)
 
 ### Timeline
-- **Week 1-2**: Email triage + RFP templates live (5 hrs/week saved)
-- **Week 3-4**: Add data sync + reporting (15 hrs/week saved total)
+- **Week 1-2**: Email triage + RFP templates live (first workflows)
+- **Week 3-4**: Add data sync + reporting (4 core workflows complete)
 - **Week 5-6**: Optimize & add monitoring
 - **Week 7-8**: Test & launch billing
 
 ### Cost (Year 1)
 ```
-Infrastructure:    $120-360/year
-YIELD Services:    $3,000-4,000/year (pay for actual results)
+Infrastructure:    $120-304/year (Options A/B)
+YIELD Services:    $8,970-16,146/year (pay for actual results)
 Google APIs:       $0
 LLM APIs:          $0 (optional, not needed)
 ─────────────────────────────
-TOTAL:             $3,120-4,360/year
+TOTAL:             $9,090-16,450/year
 ```
 
-### Value (Year 1)
+### Value (Year 1 - Conservative 50% Automation)
 ```
-Time saved:        15+ hours/week = 750+ hours/year
-Value @ $24/hr:    $18,000/year
-Net benefit:       $14,000-15,000
-ROI:               350-450%
+Time freed:        86.25 hrs/week = 4,485 hours/year
+Value @ $24/hr:    $107,640/year
+Net benefit:       $98,550/year (minimum)
+ROI:               1,084%+
 ```
+
+*Note: Moderate scenario (60%) yields $129,168 value and 1,087% ROI*
 
 ---
 
@@ -60,7 +62,9 @@ Need confirmed by end of week:
 **Action**: Confirm "Yes" for all three
 
 ### 3. Team Availability
+
 Need 8 hours total from your team over 8 weeks:
+
 - Week 1: 1 hour (kickoff)
 - Week 2: 2 hours (API setup + testing)
 - Week 3-4: 2 hours (training)
@@ -68,6 +72,18 @@ Need 8 hours total from your team over 8 weeks:
 - Week 7-8: 2 hours (testing + approval)
 
 **Action**: Confirm team can support this
+
+### 4. NDA & Data Protection
+
+To protect all sensitive student and staff data in Results Learning's systems:
+
+- ✅ Standard NDA required before access to any systems
+- ✅ All data encrypted at rest and in transit
+- ✅ Access logs maintained for all workflow operations
+- ✅ Data retention policies enforced
+- ✅ No data exported or stored outside secure systems
+
+**Action**: Sign NDA before Week 1 kickoff (template provided)
 
 ---
 
@@ -163,12 +179,14 @@ Need 8 hours total from your team over 8 weeks:
 ### Right Now (This Week)
 1. **Email back**: "Option A" or "Option B" for infrastructure
 2. **Confirm**: All APIs available (Teachworks, Gmail, Sheets)
-3. **Schedule**: 30-min kickoff call for Week 1
+3. **Sign NDA**: Standard data protection agreement (template provided)
+4. **Schedule**: 30-min kickoff call for Week 1
 
 ### Week 1 (Monday)
 1. Kickoff call
 2. Infrastructure deployment starts
 3. Workflow 1 & 2 design begins
+4. NDA execution complete before system access
 
 ### Week 2-8
 - Weekly workflow deployments
@@ -179,12 +197,14 @@ Need 8 hours total from your team over 8 weeks:
 
 ---
 
-## 💰 Simple ROI
+## 💰 Simple ROI (Conservative 50% Automation)
 
-**Investment**: $3,240 Year 1
-**Return**: $18,000 Year 1 (from time freed)
-**Payback**: 2 months
-**Year 1 Net**: $14,760
+**Investment**: $9,090 Year 1
+**Return**: $107,640 Year 1 (from time freed)
+**Payback**: 1 month or less
+**Year 1 Net**: $98,550
+
+*Moderate scenario (60% automation): $129,168 return, $118,284 net benefit*
 
 ---
 
