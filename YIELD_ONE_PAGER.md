@@ -68,19 +68,21 @@ Setup Time: 3-5 days
 
 ---
 
-## Year 1 Financial Impact
+## Year 1 Financial Impact (Conservative: 50% of Identified 34.5 hrs/day)
 
 | Investment | Cost |
 |---|---|
 | Infrastructure (Option A) | $120 |
-| YIELD Services (estimated) | $3,120 |
-| **Total Year 1 Investment** | **$3,240** |
+| YIELD Services (estimated) | $8,970 |
+| **Total Year 1 Investment** | **$9,090** |
 | | |
-| **Time Saved (measured)** | 15+ hrs/week × 50 weeks |
-| **Value @ $24/hour** | $18,000 |
+| **Time Saved (measured)** | 86.25 hrs/week × 52 weeks |
+| **Value @ $24/hour** | $107,640 |
 | | |
-| **NET BENEFIT** | **$14,760** |
-| **ROI** | **455%** |
+| **NET BENEFIT** | **$98,550** |
+| **ROI** | **1,084%** |
+
+*Note: With 24/7 automation running through nights, weekends, and holidays (52 weeks/year), potential savings scale significantly. Moderate scenario (60% of identified) yields $129,168 value and 1,087% ROI.*
 
 ---
 

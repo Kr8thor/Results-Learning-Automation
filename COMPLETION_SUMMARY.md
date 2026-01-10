@@ -287,12 +287,20 @@ All 15 documents are organized in the GitHub repository:
 - **Automatable processes**: 4 core workflows
 - **Estimated savings**: 15+ hours/week
 
-### YIELD Framework Projections
-- **Year 1 time saved**: 750+ hours
-- **Year 1 value**: $15,000+
+### YIELD Framework Projections (Conservative: 50% of Identified Hours)
+
+- **Year 1 time saved**: 4,485+ hours (50% of identified 34.5 hrs/day)
+- **Year 1 value**: $107,640+ (at $24/hour)
 - **Year 1 investment**: $3,240
-- **Year 1 ROI**: 362%+
-- **Payback period**: 6 months
+- **Year 1 ROI**: 1,084%+
+- **Payback period**: Less than 1 month
+
+### With 24/7 Automation (Moderate: 60% of Identified Hours)
+
+- **Year 1 time saved**: 5,382 hours
+- **Year 1 value**: $129,168 (at $24/hour)
+- **Year 1 ROI**: 1,087%
+- **Payback period**: Immediate (first month)
 
 ### Infrastructure Comparison
 - **Option A cost**: $120/year

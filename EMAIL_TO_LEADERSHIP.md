@@ -17,12 +17,15 @@ Thank you for completing the questionnaire. We've analyzed your team's responses
 
 We've developed a solution called the **YIELD Framework™** - a performance-based automation model where you only pay for actual time saved, measured monthly.
 
-**The numbers**:
-- **Time you can reclaim**: 15+ hours/week across your team
-- **Year 1 value**: $15,000+ in productivity
-- **Year 1 investment**: $3,240 (infrastructure + automation services)
-- **Return**: 362% ROI
+**The numbers** (Conservative - 50% of identified work):
+
+- **Time you can reclaim**: 86+ hours/week across your team (with 24/7 automation)
+- **Year 1 value**: $107,640+ in productivity freed
+- **Year 1 investment**: $9,090 (infrastructure + automation services)
+- **Return**: 1,084% ROI
 - **Risk**: Zero. If it doesn't save time, you don't pay.
+
+**Why 86+ hours/week?** Workflows run 24/7 (nights, weekends, holidays) = 52 weeks of continuous automation, not just 50 work weeks.
 
 **Two clear paths forward**:
 
